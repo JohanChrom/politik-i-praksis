@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Lovforslag - Politik i Praksis{% endblock %}
 {% block content %}
-  <h1>Lovforslag i denne samling</h1>
+  <h1>Lovforslag</h1>
+
+  <form method="get">
+    <label for="periode">Samling:</label>
+    <select name="periode" id="periode" onchange="this.form.submit()">
+      {% for label, periods in periode_groups %}
+        <optgroup label="{{ label }}">
+          {% for p in periods %}
+            <option value="{{ p.id }}" {{ "selected" if p.id == selected_periode else "" }}>{{ p.titel }}</option>
+          {% endfor %}
+        </optgroup>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit">Vis</button></noscript>
+  </form>
+
   <table>
     <tr>
       <th>Nummer</th>
       <th>Forslag</th>
       <th>
-        <a href="/bills?sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
+        <a href="/bills?periode={{ selected_periode }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
           Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
         </a>
       </th>

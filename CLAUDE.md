@@ -7,13 +7,17 @@ the standing context to keep in mind every session.
 
 ## Current status
 
-v0 built and working locally: `fetch_data.py` pulls the current session into
-`politik.db` (179 current MPs, ~34 voted bills), and `app.py` serves the three
-pages (`/` MP list, `/mp/<id>` MP detail, `/bills` bill list) plus date-sorting
-on the two date columns. Run with:
+v0+ built and working locally: `fetch_data.py` pulls **5 sessions** into
+`politik.db` - the current samling plus the whole previous valgperiode
+(`HISTORICAL_SESSIONS` in fetch_data.py; extend that list by hand to go
+further back). `app.py` serves `/` (MP list), `/mp/<id>` (MP detail, all
+fetched sessions shown as separate sections since party can change between
+them), and `/bills` (bill list) - `/` and `/bills` have a samling picker
+grouped by valgperiode, and the bill list has date-sorting. Run with:
 ```
 source .venv/bin/activate
-python3 fetch_data.py   # populates politik.db (run again to refresh data)
+python3 fetch_data.py   # populates politik.db - closed sessions are skipped
+                         # once already fetched, only the open one re-runs
 flask run                # auto-detects app.py, no FLASK_APP needed
 ```
 Next up: v1 (theming/filtering by committee, search, basic CSS).
@@ -28,7 +32,11 @@ re-derive it from the code.
   don't add candidate-matching logic (that's v4).
 - **Theme = Folketinget's existing committee data, not NLP.** Use the `SagAktør`
   committee link for theming. Keyword/NLP auto-tagging is v3, not now.
-- **Current parliamentary session only.** Don't pull historical sessions until v3.
+- **Current valgperiode + previous valgperiode only** (5 sessions, explicit
+  list in `fetch_data.py`). Deeper history / auto-detecting valgperiode
+  boundaries indefinitely is still v3 territory - the current rule (see the
+  data-source cheat-sheet below) is proven correct back to 1952, but going
+  further back is still a deliberate by-hand extension, not automatic.
 - **Local only.** No hosting/deployment work until v4.
 
 If a task seems to require going past one of these, flag it and ask rather than
@@ -54,10 +62,19 @@ was simply missing) that turned out to affect ~40% of all vote rows across the
 dataset. Fix: fetch any collection that can plausibly exceed 100 rows (`Stemme`
 by `afstemningid`, so far) as its own separate call through `get_all_json`
 (already used for the 553-bill `Sag` list), never trust it from inside a
-nested expand. Also: a person's `AktørAktør` "medlem" relation to a party
-group needs `slutdato eq null` — a relation without that check can pick up a
-stale membership from a group they've since left (also found by checking one
-MP against ft.dk and confirming live against her actual `AktørAktør` rows).
+nested expand. Also: a person's `AktørAktör` "medlem" relation to a party
+group is only valid for the reference date it actually covers
+(`startdato <= reference_date <= slutdato`) - for the still-open current
+samling that's "now", for a closed one it's that samling's own `slutdato`.
+An earlier version hardcoded "now" via `slutdato eq null`, which broke as
+soon as historical sessions were added (see `fetch_mps_for_periode` in
+fetch_data.py for the generalized version).
+
+**Valgperiode grouping rule (confirmed against the entire 1952-2026 Periode
+history, zero exceptions):** a samling titled "(2. samling)" or higher always
+marks a real election and the start of a brand-new valgperiode; a plain year
+or "(1. samling)" just continues whichever valgperiode is already running.
+Implemented in `app.py`'s `group_by_valgperiode`.
 
 ## Working conventions
 

@@ -43,7 +43,7 @@ entities relevant to this project:
 | `Afstemning` | A single vote event |
 | `Stemme` | One MP's individual vote (for / against / abstain / absent) in an `Afstemning` |
 | `SagAktør` | Links a `Sag` to actors — including which committee handled it |
-| `Periode` | A parliamentary session/year, used to scope data to "current session" |
+| `Periode` | A parliamentary session/year ("samling") — we now store several |
 | `Emneord` | Subject-term tags on cases — a secondary theming signal for later |
 
 The key insight: **`SagAktør` already links each bill to the committee that handled
@@ -73,8 +73,10 @@ committees).
   already provides, rather than building our own topic-detection logic up front.
   Custom auto-tagging (e.g. for cross-cutting topics like "climate" that span
   multiple committees) is deferred to a later version.
-- **Current parliamentary session only, to start.** Keeps the first version's data
-  volume small and easy to validate before pulling in years of history.
+- **Current valgperiode + previous valgperiode, to start.** Originally just the
+  current session; expanded once v0 was validated to also cover the current and
+  previous electoral terms (5 sessions total), so citizens can see an MP's record
+  across more than just the last few months. Deeper history stays deferred.
 - **Local only, to start.** No hosting or domain decisions yet — the focus is on
   getting the data pipeline and core pages working on one machine first.
 
@@ -88,6 +90,10 @@ committees).
   2. **MP detail** — the bills they've voted on and how they voted.
   3. **Bill list** — each bill, the committee that handled it, and the vote result.
 - No styling polish, no accounts/auth. Runs locally via `flask run`.
+- **Since extended**: now pulls the current valgperiode plus the whole
+  previous valgperiode (5 sessions), with a samling picker grouped by term
+  on the MP list and bill list, and each MP's detail page showing every
+  fetched session as its own section (party can change between them).
 
 ### v1 — Theming & browsing
 - Use the committee link as a filterable "theme" across the site.
@@ -102,7 +108,11 @@ committees).
 ### v3 — Smarter theming & more history
 - Keyword/NLP-based auto-tagging layered on top of committee categories, to catch
   cross-cutting topics that don't map cleanly to one committee.
-- Expand data to multiple past sessions/years, not just the current one.
+- Multi-session history (current + previous valgperiode) was pulled forward into
+  v0 already. Remaining here: going back further than that, which still needs
+  extending `HISTORICAL_SESSIONS` by hand — the valgperiode-boundary rule itself
+  is confirmed correct all the way back to 1952, so this is a matter of deciding
+  how far back is useful, not a data-modeling problem.
 
 ### v4 — Public & candidate-facing
 - Deploy publicly (hosting + domain).
@@ -123,7 +133,7 @@ Chosen for being approachable to a beginner and runnable with no extra infrastru
 
 - User authentication/accounts
 - Public hosting/deployment
-- Historical data beyond the current session
+- Historical data beyond the current + previous valgperiode
 - NLP/auto-tagging of themes
 - Candidate matching for non-incumbents
 

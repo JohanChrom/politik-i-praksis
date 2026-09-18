@@ -13,24 +13,34 @@ def init_db():
     conn = get_connection()
     conn.executescript(
         """
-        DROP TABLE IF EXISTS vote;
-        DROP TABLE IF EXISTS bill;
-        DROP TABLE IF EXISTS committee;
-        DROP TABLE IF EXISTS mp;
-
-        CREATE TABLE mp (
+        CREATE TABLE IF NOT EXISTS periode (
             id INTEGER PRIMARY KEY,
-            navn TEXT NOT NULL,
-            party TEXT
+            kode TEXT,
+            titel TEXT NOT NULL,
+            startdato TEXT,
+            slutdato TEXT
         );
 
-        CREATE TABLE committee (
+        CREATE TABLE IF NOT EXISTS mp (
             id INTEGER PRIMARY KEY,
             navn TEXT NOT NULL
         );
 
-        CREATE TABLE bill (
+        CREATE TABLE IF NOT EXISTS mp_period (
+            mp_id INTEGER NOT NULL REFERENCES mp(id),
+            periode_id INTEGER NOT NULL REFERENCES periode(id),
+            party TEXT,
+            PRIMARY KEY (mp_id, periode_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS committee (
             id INTEGER PRIMARY KEY,
+            navn TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS bill (
+            id INTEGER PRIMARY KEY,
+            periode_id INTEGER NOT NULL REFERENCES periode(id),
             titel TEXT NOT NULL,
             titelkort TEXT,
             nummer TEXT,
@@ -40,7 +50,7 @@ def init_db():
             dato TEXT
         );
 
-        CREATE TABLE vote (
+        CREATE TABLE IF NOT EXISTS vote (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bill_id INTEGER NOT NULL REFERENCES bill(id),
             mp_id INTEGER NOT NULL REFERENCES mp(id),

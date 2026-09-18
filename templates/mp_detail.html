@@ -2,31 +2,23 @@
 {% block title %}{{ mp.navn }} - Politik i Praksis{% endblock %}
 {% block content %}
   <h1>{{ mp.navn }}</h1>
-  <p>{{ mp.party }}</p>
 
-  <h2>Stemmer</h2>
-  {% if votes %}
-    <table>
-      <tr>
-        <th>Forslag</th>
-        <th>Nummer</th>
-        <th>
-          <a href="/mp/{{ mp.id }}?sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
-            Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
-          </a>
-        </th>
-        <th>Stemte</th>
-      </tr>
-      {% for vote in votes %}
-        <tr>
-          <td>{{ vote.titelkort }}</td>
-          <td>{{ vote.nummer }}</td>
-          <td>{{ vote.dato[:10] if vote.dato else "-" }}</td>
-          <td>{{ vote.vote_type }}</td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>Ingen registrerede stemmer i denne samling.</p>
-  {% endif %}
+  {% for section in sections %}
+    <h2>{{ section.periode.titel }} - {{ section.periode.party }}</h2>
+    {% if section.votes %}
+      <table>
+        <tr><th>Forslag</th><th>Nummer</th><th>Dato</th><th>Stemte</th></tr>
+        {% for vote in section.votes %}
+          <tr>
+            <td>{{ vote.titelkort }}</td>
+            <td>{{ vote.nummer }}</td>
+            <td>{{ vote.dato[:10] if vote.dato else "-" }}</td>
+            <td>{{ vote.vote_type }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>Ingen registrerede stemmer i denne samling.</p>
+    {% endif %}
+  {% endfor %}
 {% endblock %}

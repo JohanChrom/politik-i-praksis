@@ -2,6 +2,21 @@
 {% block title %}MP'er - Politik i Praksis{% endblock %}
 {% block content %}
   <h1>Folketingets medlemmer</h1>
+
+  <form method="get">
+    <label for="periode">Samling:</label>
+    <select name="periode" id="periode" onchange="this.form.submit()">
+      {% for label, periods in periode_groups %}
+        <optgroup label="{{ label }}">
+          {% for p in periods %}
+            <option value="{{ p.id }}" {{ "selected" if p.id == selected_periode else "" }}>{{ p.titel }}</option>
+          {% endfor %}
+        </optgroup>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit">Vis</button></noscript>
+  </form>
+
   <ul>
     {% for mp in mps %}
       <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a> ({{ mp.party }})</li>
