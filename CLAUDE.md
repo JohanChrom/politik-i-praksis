@@ -8,8 +8,9 @@ the standing context to keep in mind every session.
 ## Current status
 
 v0 built and working locally: `fetch_data.py` pulls the current session into
-`politik.db` (180 current MPs, ~34 voted bills), and `app.py` serves the three
-pages (`/` MP list, `/mp/<id>` MP detail, `/bills` bill list). Run with:
+`politik.db` (179 current MPs, ~34 voted bills), and `app.py` serves the three
+pages (`/` MP list, `/mp/<id>` MP detail, `/bills` bill list) plus date-sorting
+on the two date columns. Run with:
 ```
 source .venv/bin/activate
 python3 fetch_data.py   # populates politik.db (run again to refresh data)
@@ -43,6 +44,20 @@ just doing it — these boundaries were deliberately chosen to keep v0 buildable
 - `SagAktør` — links a `Sag` to actors, including the handling committee (our theme proxy)
 - `Periode` — a parliamentary session/year, used to scope to "current session"
 - `Emneord` — subject-term tags on cases (secondary theming signal, later)
+
+**Gotcha: the API caps every collection at 100 rows, including nested
+collections inside `$expand`, with no way to `$skip` into a nested one.** A
+full-chamber vote has up to 179 `Stemme` rows, so `Sag(id)?$expand=Sagstrin/
+Afstemning/Stemme` silently drops everyone past the first 100 — this caused a
+real bug (found by checking one bill against ft.dk's own site: an MP's vote
+was simply missing) that turned out to affect ~40% of all vote rows across the
+dataset. Fix: fetch any collection that can plausibly exceed 100 rows (`Stemme`
+by `afstemningid`, so far) as its own separate call through `get_all_json`
+(already used for the 553-bill `Sag` list), never trust it from inside a
+nested expand. Also: a person's `AktørAktør` "medlem" relation to a party
+group needs `slutdato eq null` — a relation without that check can pick up a
+stale membership from a group they've since left (also found by checking one
+MP against ft.dk and confirming live against her actual `AktørAktør` rows).
 
 ## Working conventions
 

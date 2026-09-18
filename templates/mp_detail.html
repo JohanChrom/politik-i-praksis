@@ -7,11 +7,21 @@
   <h2>Stemmer</h2>
   {% if votes %}
     <table>
-      <tr><th>Forslag</th><th>Nummer</th><th>Stemte</th></tr>
+      <tr>
+        <th>Forslag</th>
+        <th>Nummer</th>
+        <th>
+          <a href="/mp/{{ mp.id }}?sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
+            Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
+          </a>
+        </th>
+        <th>Stemte</th>
+      </tr>
       {% for vote in votes %}
         <tr>
           <td>{{ vote.titelkort }}</td>
           <td>{{ vote.nummer }}</td>
+          <td>{{ vote.dato[:10] if vote.dato else "-" }}</td>
           <td>{{ vote.vote_type }}</td>
         </tr>
       {% endfor %}

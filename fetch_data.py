@@ -69,7 +69,10 @@ def fetch_current_mps(periode_id):
     for group in groups:
         relations = get_all_json(
             "AktørAktør",
-            {"$filter": f"tilaktørid eq {group['id']} and rolleid eq 15"},
+            # slutdato eq null: only a person's currently-active membership
+            # counts - an MP who has since left this group for another one
+            # still has a (now-ended) row here that we must not pick up.
+            {"$filter": f"tilaktørid eq {group['id']} and rolleid eq 15 and slutdato eq null"},
         )
         for relation in relations:
             mp_id = relation["fraaktørid"]
@@ -106,15 +109,24 @@ def fetch_bills_with_votes(periode_id):
 
     bills = []
     for bill_id in bill_ids:
-        bill = get_json(f"Sag({bill_id})", {"$expand": "Sagstrin/Afstemning/Stemme,SagAktør"})
+        # NB: no nested Stemme here - a full-chamber vote can have up to 179
+        # individual votes, well past the API's 100-row-per-collection cap,
+        # and that cap applies inside $expand too with no way to page into
+        # it. Stemme is fetched separately below, with real pagination.
+        bill = get_json(f"Sag({bill_id})", {"$expand": "Sagstrin/Afstemning,SagAktør"})
 
+        # the vote date lives on Sagstrin (the reading/step), not on Afstemning
+        # itself, so carry the step's dato along with each vote
         afstemninger = [
-            afstemning for step in bill["Sagstrin"] for afstemning in step["Afstemning"]
+            {**afstemning, "_dato": step["dato"]}
+            for step in bill["Sagstrin"]
+            for afstemning in step["Afstemning"]
         ]
         if not afstemninger:
             continue  # never voted on - out of scope for v0
 
         final_vote = max(afstemninger, key=lambda a: a["id"])
+        stemmer = get_all_json("Stemme", {"$filter": f"afstemningid eq {final_vote['id']}"})
 
         committee = None
         for link in bill["SagAktør"]:
@@ -132,8 +144,9 @@ def fetch_bills_with_votes(periode_id):
                 "nummer": bill["nummer"],
                 "vedtaget": final_vote["vedtaget"],
                 "konklusion": final_vote["konklusion"],
+                "dato": final_vote["_dato"],
                 "committee": committee,
-                "stemmer": final_vote["Stemme"],
+                "stemmer": stemmer,
             }
         )
     return bills
@@ -162,8 +175,8 @@ def save_to_db(mps, bills):
                 saved_committees.add(committee_id)
 
         cursor.execute(
-            """INSERT INTO bill (id, titel, titelkort, nummer, committee_id, vedtaget, konklusion)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO bill (id, titel, titelkort, nummer, committee_id, vedtaget, konklusion, dato)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 bill["id"],
                 bill["titel"],
@@ -172,6 +185,7 @@ def save_to_db(mps, bills):
                 committee_id,
                 bill["vedtaget"],
                 bill["konklusion"],
+                bill["dato"],
             ),
         )
 

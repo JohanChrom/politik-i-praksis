@@ -36,7 +36,8 @@ def init_db():
             nummer TEXT,
             committee_id INTEGER REFERENCES committee(id),
             vedtaget INTEGER,
-            konklusion TEXT
+            konklusion TEXT,
+            dato TEXT
         );
 
         CREATE TABLE vote (
