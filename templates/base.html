@@ -2,14 +2,32 @@
 <html lang="da">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Politik i Praksis{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <nav>
-    <a href="/">MP'er</a> |
-    <a href="/bills">Lovforslag</a>
-  </nav>
-  <hr>
-  {% block content %}{% endblock %}
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="site-title" href="/">Politik i Praksis</a>
+      <nav class="main-nav">
+        <a href="/">Forside</a>
+        <a href="/medlemmer">Medlemmer</a>
+        <a href="/bills">Lovforslag</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      Politik i Praksis er et uafhængigt projekt og er ikke en officiel side fra
+      Folketinget. Data hentet fra
+      <a href="https://www.ft.dk/da/dokumenter/aabne_data">Folketingets åbne data</a>.
+    </div>
+  </footer>
 </body>
 </html>

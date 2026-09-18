@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Politik i Praksis{% endblock %}
+{% block content %}
+  <section class="hero">
+    <h1>Politik i Praksis</h1>
+    <p class="tagline">
+      Politisk gennemsigtighed gennem faktiske stemmer — ikke valgløfter.
+    </p>
+    <p>
+      Politikeres reelle handlinger — deres stemmer i Folketinget — siger mere om
+      deres politik end kampagneløfter gør. Politik i Praksis samler Folketingets
+      egne åbne data om afstemninger og lovforslag, så du kan se, hvordan dine
+      folkevalgte faktisk har stemt.
+    </p>
+    <div class="cta-row">
+      <a class="btn" href="/medlemmer">Se medlemmer</a>
+      <a class="btn secondary" href="/bills">Se lovforslag</a>
+    </div>
+  </section>
+
+  <div class="stats-strip">
+    <div class="stat">
+      <span class="stat-number">{{ stats.mp_count }}</span>
+      <span class="stat-label">medlemmer</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">{{ stats.bill_count }}</span>
+      <span class="stat-label">lovforslag</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">{{ stats.vote_count }}</span>
+      <span class="stat-label">registrerede stemmer</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">{{ stats.periode_count }}</span>
+      <span class="stat-label">samlinger</span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <h2>Sådan virker det</h2>
+    <p>
+      Alle data kommer direkte fra <a href="https://www.ft.dk/da/dokumenter/aabne_data">Folketingets
+      åbne data</a> — ikke fra pressemeddelelser eller partiprogrammer. Hvert
+      lovforslag er koblet til det udvalg, det blev behandlet i, og hver
+      afstemning viser præcis, hvordan hvert enkelt medlem stemte: for, imod,
+      hverken for eller imod, eller fravær.
+    </p>
+    <p>
+      Du kan se den aktuelle valgperiode og den foregående, så du kan følge et
+      medlems stemmemønster over flere samlinger — ikke kun de seneste måneder.
+    </p>
+  </div>
+{% endblock %}

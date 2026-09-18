@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Lovforslag</h1>
 
-  <form method="get">
+  <form class="periode-picker" method="get">
     <label for="periode">Samling:</label>
     <select name="periode" id="periode" onchange="this.form.submit()">
       {% for label, periods in periode_groups %}
@@ -35,7 +35,7 @@
         <td>{{ bill.titelkort }}</td>
         <td>{{ bill.dato[:10] if bill.dato else "-" }}</td>
         <td>{{ bill.committee_navn or "-" }}</td>
-        <td>{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
+        <td class="{{ 'result-passed' if bill.vedtaget else 'result-failed' }}">{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
       </tr>
     {% endfor %}
   </table>

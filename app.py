@@ -56,6 +56,19 @@ def date_order_by(default_order_by):
 
 
 @app.route("/")
+def index():
+    conn = get_connection()
+    stats = {
+        "mp_count": conn.execute("SELECT COUNT(*) FROM mp").fetchone()[0],
+        "bill_count": conn.execute("SELECT COUNT(*) FROM bill").fetchone()[0],
+        "vote_count": conn.execute("SELECT COUNT(*) FROM vote").fetchone()[0],
+        "periode_count": conn.execute("SELECT COUNT(*) FROM periode").fetchone()[0],
+    }
+    conn.close()
+    return render_template("index.html", stats=stats)
+
+
+@app.route("/medlemmer")
 def mp_list():
     conn = get_connection()
     periode_groups = get_periode_groups(conn)
@@ -76,6 +89,12 @@ def mp_list():
 
 @app.route("/mp/<int:mp_id>")
 def mp_detail(mp_id):
+    # only one sortable column on this page, so just a plain asc/desc toggle
+    # (checked against a fixed literal before use in SQL - never the raw
+    # request value - so this stays safe from SQL injection)
+    direction = "asc" if request.args.get("dir") == "asc" else "desc"
+    order_by = f"bill.dato {'ASC' if direction == 'asc' else 'DESC'}"
+
     conn = get_connection()
     mp = conn.execute("SELECT id, navn FROM mp WHERE id = ?", (mp_id,)).fetchone()
     if mp is None:
@@ -92,16 +111,16 @@ def mp_detail(mp_id):
     sections = []
     for periode in periods:
         votes = conn.execute(
-            """SELECT bill.titelkort, bill.nummer, bill.dato, vote.vote_type
+            f"""SELECT bill.titelkort, bill.nummer, bill.dato, vote.vote_type
                FROM vote JOIN bill ON vote.bill_id = bill.id
                WHERE vote.mp_id = ? AND bill.periode_id = ?
-               ORDER BY bill.dato DESC""",
+               ORDER BY {order_by}""",
             (mp_id, periode["id"]),
         ).fetchall()
         sections.append({"periode": periode, "votes": votes})
 
     conn.close()
-    return render_template("mp_detail.html", mp=mp, sections=sections)
+    return render_template("mp_detail.html", mp=mp, sections=sections, dir=direction)
 
 
 @app.route("/bills")

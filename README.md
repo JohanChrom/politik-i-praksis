@@ -98,7 +98,9 @@ committees).
 ### v1 — Theming & browsing
 - Use the committee link as a filterable "theme" across the site.
 - Add search/filter by MP name and by theme.
-- Basic CSS so the site is presentable to show to other people.
+- ~~Basic CSS so the site is presentable to show to other people.~~ Done: a
+  proper front page plus a teal/slate CSS pass across all pages, deliberately
+  neutral rather than partisan-coded given the subject matter.
 
 ### v2 — Accountability views
 - Per-MP voting-profile summary: % of votes for/against, broken down by theme.

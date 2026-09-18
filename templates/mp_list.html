@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Folketingets medlemmer</h1>
 
-  <form method="get">
+  <form class="periode-picker" method="get">
     <label for="periode">Samling:</label>
     <select name="periode" id="periode" onchange="this.form.submit()">
       {% for label, periods in periode_groups %}
@@ -17,9 +17,9 @@
     <noscript><button type="submit">Vis</button></noscript>
   </form>
 
-  <ul>
+  <ul class="mp-list">
     {% for mp in mps %}
-      <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a> ({{ mp.party }})</li>
+      <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br><small>{{ mp.party }}</small></li>
     {% endfor %}
   </ul>
 {% endblock %}

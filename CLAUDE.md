@@ -10,17 +10,20 @@ the standing context to keep in mind every session.
 v0+ built and working locally: `fetch_data.py` pulls **5 sessions** into
 `politik.db` - the current samling plus the whole previous valgperiode
 (`HISTORICAL_SESSIONS` in fetch_data.py; extend that list by hand to go
-further back). `app.py` serves `/` (MP list), `/mp/<id>` (MP detail, all
-fetched sessions shown as separate sections since party can change between
-them), and `/bills` (bill list) - `/` and `/bills` have a samling picker
-grouped by valgperiode, and the bill list has date-sorting. Run with:
+further back). `app.py` serves `/` (front page with live stats),
+`/medlemmer` (MP list), `/mp/<id>` (MP detail, all fetched sessions shown as
+separate sections since party can change between them, date-sortable), and
+`/bills` (bill list, date-sortable) - `/medlemmer` and `/bills` have a
+samling picker grouped by valgperiode. Basic CSS is in place
+(`static/style.css`, teal/slate palette, deliberately neutral - no
+red/blue - given the political subject matter). Run with:
 ```
 source .venv/bin/activate
 python3 fetch_data.py   # populates politik.db - closed sessions are skipped
                          # once already fetched, only the open one re-runs
 flask run                # auto-detects app.py, no FLASK_APP needed
 ```
-Next up: v1 (theming/filtering by committee, search, basic CSS).
+Next up: rest of v1 (theming/filtering by committee, MP name search).
 
 **Keep this line updated** whenever a version milestone from the README roadmap is
 completed, so the next session knows where things actually stand without having to
