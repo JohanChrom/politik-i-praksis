@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Lovforslag - Politik i Praksis{% endblock %}
+{% block content %}
+  <h1>Lovforslag i denne samling</h1>
+  <table>
+    <tr><th>Nummer</th><th>Forslag</th><th>Udvalg</th><th>Resultat</th></tr>
+    {% for bill in bills %}
+      <tr>
+        <td>{{ bill.nummer }}</td>
+        <td>{{ bill.titelkort }}</td>
+        <td>{{ bill.committee_navn or "-" }}</td>
+        <td>{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

@@ -49,7 +49,20 @@ entities relevant to this project:
 The key insight: **`SagAktør` already links each bill to the committee that handled
 it** (e.g. Skatteudvalget ≈ tax policy, Miljø- og Fødevareudvalget ≈ environment).
 That gives us theme categorization "for free" from Folketinget's own data structure,
-with no text analysis needed to get started.
+with no text analysis needed to get started. Specifically, the committee-referral
+relationship is the `SagAktør` row with `rolleid=11` ("Henvist til" = "referred to"),
+pointing at an `Aktør` with `typeid=3` (Udvalg) — `SagAktør` also holds other
+relationship types (proposers, ministers, spokespeople), so this role filter is
+what makes the committee link specific.
+
+Similarly, "who is a current MP" isn't a clean field on a Person `Aktør` — it's
+derived from **`Folketingsgruppe` (party group) membership**: party groups are
+`Aktør` rows with `typeid=4` scoped to the current session, and `AktørAktør` rows
+with `rolleid=15` ("medlem") pointing at one of them give that group's current
+members. This is more robust than looking at voting history (it includes MPs who
+haven't voted yet) and more complete than committee membership (it includes
+ministers, who keep their party-group seat even though they don't sit on
+committees).
 
 ## Scope Decisions
 

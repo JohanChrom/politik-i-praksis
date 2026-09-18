@@ -7,7 +7,15 @@ the standing context to keep in mind every session.
 
 ## Current status
 
-Not started yet — about to build v0 (data fetch script + minimal Flask app).
+v0 built and working locally: `fetch_data.py` pulls the current session into
+`politik.db` (180 current MPs, ~34 voted bills), and `app.py` serves the three
+pages (`/` MP list, `/mp/<id>` MP detail, `/bills` bill list). Run with:
+```
+source .venv/bin/activate
+python3 fetch_data.py   # populates politik.db (run again to refresh data)
+flask run                # auto-detects app.py, no FLASK_APP needed
+```
+Next up: v1 (theming/filtering by committee, search, basic CSS).
 
 **Keep this line updated** whenever a version milestone from the README roadmap is
 completed, so the next session knows where things actually stand without having to

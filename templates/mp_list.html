@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}MP'er - Politik i Praksis{% endblock %}
+{% block content %}
+  <h1>Folketingets medlemmer</h1>
+  <ul>
+    {% for mp in mps %}
+      <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a> ({{ mp.party }})</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
