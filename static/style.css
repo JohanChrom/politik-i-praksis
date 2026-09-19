@@ -10,6 +10,32 @@
   --danger: #dc2626;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --accent: #2dd4bf;
+    --accent-hover: #5eead4;
+    --success: #4ade80;
+    --danger: #f87171;
+  }
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --success: #4ade80;
+  --danger: #f87171;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -55,7 +81,7 @@ header.site-header {
 }
 
 .site-header .header-inner {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1rem 1.5rem;
   display: flex;
@@ -90,8 +116,22 @@ nav.main-nav a:hover {
   color: var(--accent);
 }
 
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+}
+
 main {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
@@ -103,7 +143,7 @@ footer.site-footer {
 }
 
 .site-footer .footer-inner {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
 }
@@ -141,7 +181,7 @@ table {
 
 th, td {
   text-align: left;
-  padding: 0.6rem 0.9rem;
+  padding: 0.8rem 1.1rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -160,6 +200,45 @@ tr:last-child td {
 
 tbody tr:hover {
   background: var(--bg);
+}
+
+/* Expandable bill descriptions */
+
+td details summary {
+  cursor: pointer;
+}
+
+td details summary::marker {
+  color: var(--text-muted);
+}
+
+td details p {
+  max-width: 55ch;
+  margin: 0.6rem 0 0;
+  color: var(--text-muted);
+}
+
+table.vote-breakdown {
+  margin: 0.6rem 0 0;
+  width: auto;
+  font-size: 0.85rem;
+}
+
+table.vote-breakdown th,
+table.vote-breakdown td {
+  padding: 0.3rem 0.6rem;
+}
+
+table.vote-breakdown .vote-for {
+  color: var(--success);
+}
+
+table.vote-breakdown .vote-imod {
+  color: var(--danger);
+}
+
+table.vote-breakdown .vote-fravaer {
+  color: var(--text-muted);
 }
 
 .result-passed {
@@ -204,6 +283,13 @@ ul.mp-list li {
   margin: 0 auto;
 }
 
+.disclaimer {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin: 1rem auto 0;
+}
+
 .cta-row {
   display: flex;
   justify-content: center;
@@ -240,7 +326,7 @@ ul.mp-list li {
 .stats-strip {
   display: flex;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 3.5rem;
   margin: 2.5rem 0;
   flex-wrap: wrap;
 }
@@ -267,4 +353,8 @@ ul.mp-list li {
   border-radius: 8px;
   padding: 1.5rem;
   margin-top: 2rem;
+}
+
+.info-block p {
+  max-width: 70ch;
 }

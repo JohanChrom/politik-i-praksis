@@ -38,6 +38,17 @@ def init_db():
             navn TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS sponsor (
+            id INTEGER PRIMARY KEY,
+            navn TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS bill_sponsor (
+            bill_id INTEGER NOT NULL REFERENCES bill(id),
+            sponsor_id INTEGER NOT NULL REFERENCES sponsor(id),
+            PRIMARY KEY (bill_id, sponsor_id)
+        );
+
         CREATE TABLE IF NOT EXISTS bill (
             id INTEGER PRIMARY KEY,
             periode_id INTEGER NOT NULL REFERENCES periode(id),
@@ -47,7 +58,11 @@ def init_db():
             committee_id INTEGER REFERENCES committee(id),
             vedtaget INTEGER,
             konklusion TEXT,
-            dato TEXT
+            dato TEXT,
+            resume TEXT,
+            lovnummer TEXT,
+            lovnummerdato TEXT,
+            retsinformationsurl TEXT
         );
 
         CREATE TABLE IF NOT EXISTS vote (

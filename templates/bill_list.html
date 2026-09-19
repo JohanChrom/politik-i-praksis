@@ -27,14 +27,44 @@
         </a>
       </th>
       <th>Udvalg</th>
+      <th>Forslagsstiller</th>
       <th>Resultat</th>
     </tr>
     {% for bill in bills %}
       <tr>
         <td>{{ bill.nummer }}</td>
-        <td>{{ bill.titelkort }}</td>
+        <td>
+          <details>
+            <summary>{{ bill.titelkort }}</summary>
+            {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
+            {% if bill.party_votes %}
+              <table class="vote-breakdown">
+                <tr>
+                  <th>Parti</th>
+                  <th>For</th>
+                  <th>Imod</th>
+                  <th>Fravær</th>
+                  <th>Hverken</th>
+                </tr>
+                {% for pv in bill.party_votes %}
+                  <tr>
+                    <td>{{ pv.party }}</td>
+                    <td class="vote-for">{{ pv["For"] }}</td>
+                    <td class="vote-imod">{{ pv["Imod"] }}</td>
+                    <td class="vote-fravaer">{{ pv["Fravær"] }}</td>
+                    <td class="vote-fravaer">{{ pv["Hverken for eller imod"] }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            {% endif %}
+            {% if bill.law_url %}
+              <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
+            {% endif %}
+          </details>
+        </td>
         <td>{{ bill.dato[:10] if bill.dato else "-" }}</td>
         <td>{{ bill.committee_navn or "-" }}</td>
+        <td>{{ bill.sponsor_navne or "-" }}</td>
         <td class="{{ 'result-passed' if bill.vedtaget else 'result-failed' }}">{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
       </tr>
     {% endfor %}

@@ -12,6 +12,9 @@
       egne åbne data om afstemninger og lovforslag, så du kan se, hvordan dine
       folkevalgte faktisk har stemt.
     </p>
+    <p class="disclaimer">
+      Bemærk: Data dækker perioden fra {{ stats.data_start }} og frem til i dag.
+    </p>
     <div class="cta-row">
       <a class="btn" href="/medlemmer">Se medlemmer</a>
       <a class="btn secondary" href="/bills">Se lovforslag</a>
@@ -19,10 +22,6 @@
   </section>
 
   <div class="stats-strip">
-    <div class="stat">
-      <span class="stat-number">{{ stats.mp_count }}</span>
-      <span class="stat-label">medlemmer</span>
-    </div>
     <div class="stat">
       <span class="stat-number">{{ stats.bill_count }}</span>
       <span class="stat-label">lovforslag</span>
@@ -49,6 +48,15 @@
     <p>
       Du kan se den aktuelle valgperiode og den foregående, så du kan følge et
       medlems stemmemønster over flere samlinger — ikke kun de seneste måneder.
+    </p>
+    <p>
+      Ikke alle medlemmer stemmer ved hver afstemning. Partierne indgår såkaldte
+      <a href="https://www.ft.dk/da/ofte-stillede-spoergsmaal/mode_hvad-er-clearingaftaler">clearingaftaler</a>,
+      som betyder, at clearede medlemmer ikke deltager i afstemningen — de kan
+      dermed fx deltage i politiske møder, konferencer eller studieture, uden at
+      det påvirker styrkeforholdet i Folketingssalen. Efter grundlovens § 50 er
+      Folketinget beslutningsdygtigt, når over halvdelen af medlemmerne (90)
+      deltager i en afstemning.
     </p>
   </div>
 {% endblock %}

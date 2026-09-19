@@ -130,6 +130,14 @@ def fetch_bills_for_periode(periode_id):
             committee_cache[aktør_id] = data if data["typeid"] == 3 else None
         return committee_cache[aktør_id]
 
+    sponsor_cache = {}
+
+    def get_sponsor(aktør_id):
+        if aktør_id not in sponsor_cache:
+            data = get_json(f"Aktør({aktør_id})")
+            sponsor_cache[aktør_id] = data if data["typeid"] == 5 else None
+        return sponsor_cache[aktør_id]
+
     bills = []
     for bill_id in bill_ids:
         # NB: no nested Stemme here - a full-chamber vote can have up to 179
@@ -152,12 +160,18 @@ def fetch_bills_for_periode(periode_id):
         stemmer = get_all_json("Stemme", {"$filter": f"afstemningid eq {final_vote['id']}"})
 
         committee = None
+        sponsors = []
         for link in bill["SagAktør"]:
             if link["rolleid"] == 11:
                 found = get_committee(link["aktørid"])
                 if found:
                     committee = found
                     break
+        for link in bill["SagAktør"]:
+            if link["rolleid"] in (16, 19):
+                found = get_sponsor(link["aktørid"])
+                if found:
+                    sponsors.append(found)
 
         bills.append(
             {
@@ -170,6 +184,11 @@ def fetch_bills_for_periode(periode_id):
                 "konklusion": final_vote["konklusion"],
                 "dato": final_vote["_dato"],
                 "committee": committee,
+                "sponsors": sponsors,
+                "resume": bill["resume"],
+                "lovnummer": bill["lovnummer"],
+                "lovnummerdato": bill["lovnummerdato"],
+                "retsinformationsurl": bill["retsinformationsurl"],
                 "stemmer": stemmer,
             }
         )
@@ -191,6 +210,10 @@ def save_periode_to_db(periode, mps, bills):
         "DELETE FROM vote WHERE bill_id IN (SELECT id FROM bill WHERE periode_id = ?)",
         (periode["id"],),
     )
+    cursor.execute(
+        "DELETE FROM bill_sponsor WHERE bill_id IN (SELECT id FROM bill WHERE periode_id = ?)",
+        (periode["id"],),
+    )
     cursor.execute("DELETE FROM bill WHERE periode_id = ?", (periode["id"],))
     cursor.execute("DELETE FROM mp_period WHERE periode_id = ?", (periode["id"],))
 
@@ -202,6 +225,7 @@ def save_periode_to_db(periode, mps, bills):
         )
 
     saved_committees = set()
+    saved_sponsors = set()
     for bill in bills:
         committee_id = None
         if bill["committee"]:
@@ -214,8 +238,9 @@ def save_periode_to_db(periode, mps, bills):
                 saved_committees.add(committee_id)
 
         cursor.execute(
-            """INSERT INTO bill (id, periode_id, titel, titelkort, nummer, committee_id, vedtaget, konklusion, dato)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO bill (id, periode_id, titel, titelkort, nummer, committee_id, vedtaget, konklusion, dato,
+                                 resume, lovnummer, lovnummerdato, retsinformationsurl)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 bill["id"],
                 periode["id"],
@@ -226,8 +251,24 @@ def save_periode_to_db(periode, mps, bills):
                 bill["vedtaget"],
                 bill["konklusion"],
                 bill["dato"],
+                bill["resume"],
+                bill["lovnummer"],
+                bill["lovnummerdato"],
+                bill["retsinformationsurl"],
             ),
         )
+
+        for sponsor in bill["sponsors"]:
+            if sponsor["id"] not in saved_sponsors:
+                cursor.execute(
+                    "INSERT OR IGNORE INTO sponsor (id, navn) VALUES (?, ?)",
+                    (sponsor["id"], sponsor["navn"]),
+                )
+                saved_sponsors.add(sponsor["id"])
+            cursor.execute(
+                "INSERT OR IGNORE INTO bill_sponsor (bill_id, sponsor_id) VALUES (?, ?)",
+                (bill["id"], sponsor["id"]),
+            )
 
         for stemme in bill["stemmer"]:
             if stemme["aktørid"] not in mps:

@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Politik i Praksis{% endblock %}</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -15,6 +21,7 @@
         <a href="/medlemmer">Medlemmer</a>
         <a href="/bills">Lovforslag</a>
       </nav>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Skift til mørkt tema">🌙</button>
     </div>
   </header>
 
@@ -29,5 +36,32 @@
       <a href="https://www.ft.dk/da/dokumenter/aabne_data">Folketingets åbne data</a>.
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      var html = document.documentElement;
+
+      function isDark() {
+        return html.getAttribute('data-theme') === 'dark'
+          || (!html.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+
+      function updateButton() {
+        var dark = isDark();
+        btn.textContent = dark ? '☀️' : '🌙';
+        btn.setAttribute('aria-label', dark ? 'Skift til lyst tema' : 'Skift til mørkt tema');
+      }
+
+      btn.addEventListener('click', function () {
+        var next = isDark() ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateButton();
+      });
+
+      updateButton();
+    })();
+  </script>
 </body>
 </html>
