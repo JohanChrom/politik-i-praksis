@@ -14,6 +14,13 @@
         </optgroup>
       {% endfor %}
     </select>
+    <label for="udvalg">Udvalg:</label>
+    <select name="udvalg" id="udvalg" onchange="this.form.submit()">
+      <option value="">Alle</option>
+      {% for c in committees %}
+        <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
+      {% endfor %}
+    </select>
     <label for="q">Søg:</label>
     <input type="search" name="q" id="q" value="{{ q }}" placeholder="Navn...">
     <button type="submit">Vis</button>
@@ -22,7 +29,11 @@
   {% if mps %}
     <ul class="mp-list">
       {% for mp in mps %}
-        <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br><small>{{ mp.party }}</small></li>
+        <li>
+          <a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br>
+          <small>{{ mp.party }}</small>
+          {% if mp.committees %}<br><small>{{ mp.committees }}</small>{% endif %}
+        </li>
       {% endfor %}
     </ul>
   {% else %}

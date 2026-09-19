@@ -109,6 +109,34 @@ def fetch_mps_for_periode(periode_id, reference_date):
     return mps
 
 
+def fetch_committee_memberships_for_periode(periode_id, reference_date, mps):
+    """Returns [(mp_id, committee_dict), ...] - which committee(s) each MP
+    sits on for this periode, as of `reference_date`. Same rolleid=15
+    ("medlem") pattern as fetch_mps_for_periode, just pointed at Aktør
+    typeid=3 (committees) instead of typeid=4 (party groups). Only keeps a
+    membership for someone already in `mps` (mirrors how vote-saving
+    already ignores anyone not tracked for this session)."""
+    committees = get_all_json(
+        "Aktør", {"$filter": f"typeid eq 3 and periodeid eq {periode_id}"}
+    )
+
+    memberships = []
+    for committee in committees:
+        relations = get_all_json(
+            "AktørAktør",
+            {"$filter": f"tilaktørid eq {committee['id']} and rolleid eq 15"},
+        )
+        for relation in relations:
+            start = datetime.fromisoformat(relation["startdato"]) if relation["startdato"] else datetime.min
+            end = datetime.fromisoformat(relation["slutdato"]) if relation["slutdato"] else None
+            if not (start <= reference_date and (end is None or reference_date <= end)):
+                continue  # this particular membership wasn't active at reference_date
+            mp_id = relation["fraaktørid"]
+            if mp_id in mps:
+                memberships.append((mp_id, committee))
+    return memberships
+
+
 def fill_in_mp_names(mps):
     for mp_id in mps:
         mps[mp_id]["navn"] = get_json(f"Aktør({mp_id})")["navn"]
@@ -140,13 +168,26 @@ def fetch_bills_for_periode(periode_id):
             sponsor_cache[aktør_id] = data if data["typeid"] == 5 else None
         return sponsor_cache[aktør_id]
 
+    emneord_cache = {}
+
+    def get_emneord(emneord_id):
+        """Resolves an EmneordSag link to its term text, skipping typeid 4 -
+        confirmed by sampling real bills that typeid 4 terms are law-section
+        citations (e.g. "Retspleje 24", "Banker og pengeinstitutter 28"), not
+        topic keywords - the other typeids (1, 2, 3 seen so far) are genuine,
+        human-readable subjects (e.g. "byggeri", "donationer", "fradrag")."""
+        if emneord_id not in emneord_cache:
+            data = get_json(f"Emneord({emneord_id})")
+            emneord_cache[emneord_id] = data if data["typeid"] != 4 else None
+        return emneord_cache[emneord_id]
+
     bills = []
     for bill_id in bill_ids:
         # NB: no nested Stemme here - a full-chamber vote can have up to 179
         # individual votes, well past the API's 100-row-per-collection cap,
         # and that cap applies inside $expand too with no way to page into
         # it. Stemme is fetched separately below, with real pagination.
-        bill = get_json(f"Sag({bill_id})", {"$expand": "Sagstrin/Afstemning,SagAktør"})
+        bill = get_json(f"Sag({bill_id})", {"$expand": "Sagstrin/Afstemning,SagAktør,EmneordSag"})
 
         # the vote date lives on Sagstrin (the reading/step), not on Afstemning
         # itself, so carry the step's dato along with each vote
@@ -175,6 +216,12 @@ def fetch_bills_for_periode(periode_id):
                 if found:
                     sponsors.append(found)
 
+        emneord_terms = []
+        for link in bill["EmneordSag"]:
+            found = get_emneord(link["emneordid"])
+            if found:
+                emneord_terms.append(found)
+
         bills.append(
             {
                 "id": bill["id"],
@@ -187,6 +234,7 @@ def fetch_bills_for_periode(periode_id):
                 "dato": final_vote["_dato"],
                 "committee": committee,
                 "sponsors": sponsors,
+                "emneord_terms": emneord_terms,
                 "resume": bill["resume"],
                 "lovnummer": bill["lovnummer"],
                 "lovnummerdato": bill["lovnummerdato"],
@@ -197,7 +245,7 @@ def fetch_bills_for_periode(periode_id):
     return bills
 
 
-def save_periode_to_db(periode, mps, bills):
+def save_periode_to_db(periode, mps, bills, committee_memberships):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -216,8 +264,13 @@ def save_periode_to_db(periode, mps, bills):
         "DELETE FROM bill_sponsor WHERE bill_id IN (SELECT id FROM bill WHERE periode_id = ?)",
         (periode["id"],),
     )
+    cursor.execute(
+        "DELETE FROM bill_emneord WHERE bill_id IN (SELECT id FROM bill WHERE periode_id = ?)",
+        (periode["id"],),
+    )
     cursor.execute("DELETE FROM bill WHERE periode_id = ?", (periode["id"],))
     cursor.execute("DELETE FROM mp_period WHERE periode_id = ?", (periode["id"],))
+    cursor.execute("DELETE FROM mp_committee WHERE periode_id = ?", (periode["id"],))
 
     for mp_id, mp in mps.items():
         cursor.execute("INSERT OR IGNORE INTO mp (id, navn) VALUES (?, ?)", (mp_id, mp["navn"]))
@@ -228,6 +281,7 @@ def save_periode_to_db(periode, mps, bills):
 
     saved_committees = set()
     saved_sponsors = set()
+    saved_emneord = set()
     for bill in bills:
         committee_id = None
         if bill["committee"]:
@@ -272,6 +326,18 @@ def save_periode_to_db(periode, mps, bills):
                 (bill["id"], sponsor["id"]),
             )
 
+        for term in bill["emneord_terms"]:
+            if term["id"] not in saved_emneord:
+                cursor.execute(
+                    "INSERT OR IGNORE INTO emneord (id, tekst) VALUES (?, ?)",
+                    (term["id"], term["emneord"]),
+                )
+                saved_emneord.add(term["id"])
+            cursor.execute(
+                "INSERT OR IGNORE INTO bill_emneord (bill_id, emneord_id) VALUES (?, ?)",
+                (bill["id"], term["id"]),
+            )
+
         for stemme in bill["stemmer"]:
             if stemme["aktørid"] not in mps:
                 continue  # not someone we're tracking for this session
@@ -279,6 +345,18 @@ def save_periode_to_db(periode, mps, bills):
                 "INSERT INTO vote (bill_id, mp_id, vote_type) VALUES (?, ?, ?)",
                 (bill["id"], stemme["aktørid"], STEMMETYPE.get(stemme["typeid"], "Ukendt")),
             )
+
+    for mp_id, committee in committee_memberships:
+        if committee["id"] not in saved_committees:
+            cursor.execute(
+                "INSERT OR IGNORE INTO committee (id, navn) VALUES (?, ?)",
+                (committee["id"], committee["navn"]),
+            )
+            saved_committees.add(committee["id"])
+        cursor.execute(
+            "INSERT OR IGNORE INTO mp_committee (mp_id, committee_id, periode_id) VALUES (?, ?, ?)",
+            (mp_id, committee["id"], periode["id"]),
+        )
 
     conn.commit()
     conn.close()
@@ -310,7 +388,10 @@ def main():
         bills = fetch_bills_for_periode(periode_id)
         print(f"  -> {len(bills)} bills with recorded votes")
 
-        save_periode_to_db(periode, mps, bills)
+        committee_memberships = fetch_committee_memberships_for_periode(periode_id, reference_date, mps)
+        print(f"  -> {len(committee_memberships)} committee memberships")
+
+        save_periode_to_db(periode, mps, bills, committee_memberships)
 
     print("Done.")
 

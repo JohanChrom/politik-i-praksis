@@ -228,6 +228,12 @@ td details p {
   color: var(--text-muted);
 }
 
+p.tags {
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 table.vote-breakdown {
   margin: 0.6rem 0 0;
   width: auto;

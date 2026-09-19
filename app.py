@@ -144,13 +144,36 @@ def mp_list():
     conn = get_connection()
     periode_groups = get_periode_groups(conn)
     selected_periode = get_selected_periode(conn)
+    selected_committee = request.args.get("udvalg", type=int)
+
+    committees = conn.execute(
+        """SELECT DISTINCT committee.id, committee.navn
+           FROM mp_committee JOIN committee ON committee.id = mp_committee.committee_id
+           WHERE mp_committee.periode_id = ?
+           ORDER BY committee.navn""",
+        (selected_periode,),
+    ).fetchall()
+
+    where = "mp_period.periode_id = ?"
+    params = [selected_periode]
+    if selected_committee:
+        where += """ AND EXISTS (
+            SELECT 1 FROM mp_committee
+            WHERE mp_id = mp.id AND periode_id = mp_period.periode_id AND committee_id = ?
+        )"""
+        params.append(selected_committee)
 
     mps = conn.execute(
-        """SELECT mp.id, mp.navn, mp_period.party
+        f"""SELECT mp.id, mp.navn, mp_period.party,
+                   (SELECT GROUP_CONCAT(committee.navn, ', ')
+                    FROM mp_committee
+                    JOIN committee ON committee.id = mp_committee.committee_id
+                    WHERE mp_committee.mp_id = mp.id
+                      AND mp_committee.periode_id = mp_period.periode_id) AS committees
            FROM mp_period JOIN mp ON mp_period.mp_id = mp.id
-           WHERE mp_period.periode_id = ?
+           WHERE {where}
            ORDER BY mp.navn""",
-        (selected_periode,),
+        params,
     ).fetchall()
     conn.close()
 
@@ -160,7 +183,8 @@ def mp_list():
         mps = [mp for mp in mps if q.lower() in mp["navn"].lower()]
 
     return render_template(
-        "mp_list.html", mps=mps, periode_groups=periode_groups, selected_periode=selected_periode, q=q
+        "mp_list.html", mps=mps, periode_groups=periode_groups, selected_periode=selected_periode, q=q,
+        committees=committees, selected_committee=selected_committee,
     )
 
 
@@ -178,7 +202,12 @@ def mp_detail(mp_id):
         abort(404)
 
     periods = conn.execute(
-        """SELECT periode.id, periode.titel, mp_period.party
+        """SELECT periode.id, periode.titel, mp_period.party,
+                  (SELECT GROUP_CONCAT(committee.navn, ', ')
+                   FROM mp_committee
+                   JOIN committee ON committee.id = mp_committee.committee_id
+                   WHERE mp_committee.mp_id = mp_period.mp_id
+                     AND mp_committee.periode_id = periode.id) AS committees
            FROM mp_period JOIN periode ON mp_period.periode_id = periode.id
            WHERE mp_period.mp_id = ?
            ORDER BY periode.startdato DESC""",
@@ -195,6 +224,10 @@ def mp_detail(mp_id):
                         FROM bill_sponsor
                         JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
                         WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
+                       (SELECT GROUP_CONCAT(emneord.tekst, ', ')
+                        FROM bill_emneord
+                        JOIN emneord ON emneord.id = bill_emneord.emneord_id
+                        WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster,
                        vote.vote_type
                FROM vote JOIN bill ON vote.bill_id = bill.id
                LEFT JOIN committee ON bill.committee_id = committee.id
@@ -218,6 +251,7 @@ def bill_list():
     periode_groups = get_periode_groups(conn)
     selected_periode = get_selected_periode(conn)
     selected_committee = request.args.get("udvalg", type=int)
+    selected_emneord = request.args.get("emneord", type=int)
 
     committees = conn.execute(
         """SELECT DISTINCT committee.id, committee.navn
@@ -227,11 +261,23 @@ def bill_list():
         (selected_periode,),
     ).fetchall()
 
+    emneord_options = conn.execute(
+        """SELECT DISTINCT emneord.id, emneord.tekst
+           FROM bill JOIN bill_emneord ON bill_emneord.bill_id = bill.id
+                     JOIN emneord ON emneord.id = bill_emneord.emneord_id
+           WHERE bill.periode_id = ?
+           ORDER BY emneord.tekst""",
+        (selected_periode,),
+    ).fetchall()
+
     where = "bill.periode_id = ?"
     params = [selected_periode]
     if selected_committee:
         where += " AND bill.committee_id = ?"
         params.append(selected_committee)
+    if selected_emneord:
+        where += " AND EXISTS (SELECT 1 FROM bill_emneord WHERE bill_id = bill.id AND emneord_id = ?)"
+        params.append(selected_emneord)
 
     bills = conn.execute(
         f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.vedtaget, bill.dato,
@@ -240,7 +286,11 @@ def bill_list():
                    (SELECT GROUP_CONCAT(sponsor.navn, ', ')
                     FROM bill_sponsor
                     JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
-                    WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne
+                    WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
+                   (SELECT GROUP_CONCAT(emneord.tekst, ', ')
+                    FROM bill_emneord
+                    JOIN emneord ON emneord.id = bill_emneord.emneord_id
+                    WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster
            FROM bill LEFT JOIN committee ON bill.committee_id = committee.id
            WHERE {where}
            ORDER BY {order_by}""",
@@ -260,6 +310,8 @@ def bill_list():
         selected_periode=selected_periode,
         committees=committees,
         selected_committee=selected_committee,
+        emneord_options=emneord_options,
+        selected_emneord=selected_emneord,
     )
 
 

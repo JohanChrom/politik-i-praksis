@@ -45,7 +45,7 @@ entities relevant to this project:
 | `Stemme`     | One MP's individual vote (for / against / abstain / absent) in an`Afstemning` |
 | `SagAktør`  | Links a`Sag` to actors — including which committee handled it                |
 | `Periode`    | A parliamentary session/year ("samling") — we now store several                |
-| `Emneord`    | Subject-term tags on cases — a secondary theming signal for later              |
+| `Emneord`    | Subject-term tags on cases, linked via `EmneordSag` — our v2 keyword layer     |
 
 The key insight: **`SagAktør` already links each bill to the committee that handled
 it** (e.g. Skatteudvalget ≈ tax policy, Miljø- og Fødevareudvalget ≈ environment).
@@ -70,14 +70,16 @@ committees).
 - **Incumbents only.** Folketinget's data only contains voting records for sitting
   and former MPs. Brand-new candidates who've never held a seat have no track
   record to show — they're deliberately out of scope until a later version.
-- **Themes via existing categories first.** We reuse the committee link the data
-  already provides, rather than building our own topic-detection logic up front.
-  Custom auto-tagging (e.g. for cross-cutting topics like "climate" that span
-  multiple committees) is deferred to a later version.
+- **Themes via existing categories first.** We reuse the committee link and,
+  as of v2, Folketinget's own `Emneord` subject-term tags, rather than
+  building our own topic-detection logic. A hand-written keyword dictionary
+  or statistical/NLP auto-tagging is deferred further still, and only worth
+  revisiting if Emneord coverage proves insufficient.
 - **Current valgperiode + previous valgperiode, to start.** Originally just the
   current session; expanded once v0 was validated to also cover the current and
-  previous electoral terms (5 sessions total), so citizens can see an MP's record
-  across more than just the last few months. Deeper history stays deferred.
+  previous electoral terms (5 sessions total), then further to 2015 (15
+  sessions, four full valgperioder) as part of v2. Going back further than
+  2015 stays a deliberate by-hand extension, not automatic.
 - **Local only, to start.** No hosting or domain decisions yet — the focus is on
   getting the data pipeline and core pages working on one machine first.
 
@@ -100,25 +102,32 @@ committees).
 ### v1 — Theming & browsing — done
 
 - ~~Use the committee link as a filterable "theme" across the site.~~ Done:
-  `/bills` has a committee ("Udvalg") filter. Filtering `/medlemmer` by
-  committee was deliberately left out — the data only links a committee to
-  the bills it handled, not to which MPs sit on it, so that would need a new
-  data fetch, not just a filter.
+  `/bills` has a committee ("Udvalg") filter, and `/medlemmer` does too as
+  of v2, once committee-membership data was fetched (see below) - it also
+  now shows each member's committee seat(s) directly in the list.
 - ~~Add search/filter by MP name and by theme.~~ Done: `/medlemmer` has a
   name-search box.
 - ~~Basic CSS so the site is presentable to show to other people.~~ Done: a
   proper front page plus a teal/slate CSS pass across all pages, deliberately
   neutral rather than partisan-coded given the subject matter.
 
-### v2 — Smarter theming & more history
+### v2 — Smarter theming & more history — done
 
-- Keyword/NLP-based auto-tagging layered on top of committee categories, to catch
-  cross-cutting topics that don't map cleanly to one committee.
-- Multi-session history (current + previous valgperiode) was pulled forward into
-  v0 already. Remaining here: going back further than that, which still needs
-  extending `HISTORICAL_SESSIONS` by hand — the valgperiode-boundary rule itself
-  is confirmed correct all the way back to 1952, so this is a matter of deciding
-  how far back is useful, not a data-modeling problem.
+- ~~Keyword-based tagging layered on top of committee categories, to catch
+  cross-cutting topics that don't map cleanly to one committee.~~ Done:
+  bills are tagged with Folketinget's own `Emneord` subject terms (fetched
+  via the `EmneordSag` junction, filtered to drop law-section-citation
+  entries), shown as a tag list on each bill and as a second filter
+  alongside Udvalg on `/bills` - clean, human-readable keywords straight
+  from official data, no NLP or hand-written dictionary needed. Bundled in
+  the same rebuild: committee membership (which committee(s) each MP sits
+  on), unlocking the `/medlemmer` committee filter above.
+- ~~Deeper history than the current + previous valgperiode.~~ Done:
+  `HISTORICAL_SESSIONS` now goes back to 2015-06-18, landing exactly on a
+  valgperiode boundary (four full electoral terms) rather than a partial one -
+  the valgperiode-boundary rule itself is confirmed correct all the way back
+  to 1952, so going further is a matter of deciding how far back is useful,
+  not a data-modeling problem.
 
 ### v3 — Public & candidate-facing
 
@@ -128,7 +137,6 @@ committees).
   voting record on each theme.
 - Possibly a "find your match" tool comparing a citizen's stated views to MPs'
   actual voting records.
-
 
 ## Tech Stack (v0)
 
@@ -142,8 +150,9 @@ Chosen for being approachable to a beginner and runnable with no extra infrastru
 
 - User authentication/accounts
 - Public hosting/deployment
-- Historical data beyond the current + previous valgperiode
-- NLP/auto-tagging of themes
+- Historical data beyond 2015 (four valgperioder)
+- Statistical/NLP auto-tagging of themes (Folketinget's own `Emneord` tags
+  turned out to be enough - see v2)
 - Candidate matching for non-incumbents
 
 These are all deferred to later versions above, not abandoned — this list exists so

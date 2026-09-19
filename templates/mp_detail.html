@@ -13,6 +13,7 @@
 
   {% for section in sections %}
     <h2>{{ section.periode.titel }} - {{ section.periode.party }}</h2>
+    {% if section.periode.committees %}<p class="tags">Udvalg: {{ section.periode.committees }}</p>{% endif %}
     {% if section.votes %}
       <table>
         <tr>
@@ -31,6 +32,7 @@
               <details>
                 <summary>{{ vote.titelkort }}</summary>
                 {% if vote.resume %}<p>{{ vote.resume }}</p>{% endif %}
+                {% if vote.emneord_tekster %}<p class="tags">Emneord: {{ vote.emneord_tekster }}</p>{% endif %}
                 {% if vote.law_url %}
                   <p><a href="{{ vote.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
                 {% elif not vote.vedtaget %}

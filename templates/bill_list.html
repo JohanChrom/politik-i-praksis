@@ -21,6 +21,13 @@
         <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
       {% endfor %}
     </select>
+    <label for="emneord">Emneord:</label>
+    <select name="emneord" id="emneord" onchange="this.form.submit()">
+      <option value="">Alle</option>
+      {% for e in emneord_options %}
+        <option value="{{ e.id }}" {{ "selected" if e.id == selected_emneord else "" }}>{{ e.tekst }}</option>
+      {% endfor %}
+    </select>
     <noscript><button type="submit">Vis</button></noscript>
   </form>
 
@@ -29,7 +36,7 @@
       <th>Nummer</th>
       <th>Forslag</th>
       <th>
-        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
+        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&emneord={{ selected_emneord or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
           Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
         </a>
       </th>
@@ -44,6 +51,7 @@
           <details>
             <summary>{{ bill.titelkort }}</summary>
             {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
+            {% if bill.emneord_tekster %}<p class="tags">Emneord: {{ bill.emneord_tekster }}</p>{% endif %}
             {% if bill.law_url %}
               <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
             {% elif not bill.vedtaget %}
