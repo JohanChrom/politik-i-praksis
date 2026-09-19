@@ -14,6 +14,13 @@
         </optgroup>
       {% endfor %}
     </select>
+    <label for="udvalg">Udvalg:</label>
+    <select name="udvalg" id="udvalg" onchange="this.form.submit()">
+      <option value="">Alle</option>
+      {% for c in committees %}
+        <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
+      {% endfor %}
+    </select>
     <noscript><button type="submit">Vis</button></noscript>
   </form>
 
@@ -22,7 +29,7 @@
       <th>Nummer</th>
       <th>Forslag</th>
       <th>
-        <a href="/bills?periode={{ selected_periode }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
+        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
           Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
         </a>
       </th>

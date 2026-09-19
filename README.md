@@ -23,28 +23,29 @@ truth, so the picture is factual rather than rhetorical.
 ## Outcome
 
 Create political transparency that lets citizens:
+
 - Select the candidate who best matches their own views, based on that candidate's
   actual actions (votes, proposed laws).
 - Hold politicians accountable to their real political record, not just their talk.
 
 ## Data Source
 
-[Folketinget's open data](https://www.ft.dk/da/dokumenter/aabne_data) is exposed
+[Folketinget&#39;s open data](https://www.ft.dk/da/dokumenter/aabne_data) is exposed
 through an OData API at **oda.ft.dk** — no authentication required. It defaults to
 XML but returns clean JSON if you add `?$format=json` to any request (confirmed
 against the live API), which is what we'll use — no XML parsing needed. The
 entities relevant to this project:
 
-| Entity | What it is |
-|---|---|
-| `Aktør` | Participants: MPs, parties, and committees ("Udvalg") are all actors |
-| `Sag` | A case/bill |
-| `Sagstrin` | A procedural step of a case (a vote happens at a step) |
-| `Afstemning` | A single vote event |
-| `Stemme` | One MP's individual vote (for / against / abstain / absent) in an `Afstemning` |
-| `SagAktør` | Links a `Sag` to actors — including which committee handled it |
-| `Periode` | A parliamentary session/year ("samling") — we now store several |
-| `Emneord` | Subject-term tags on cases — a secondary theming signal for later |
+| Entity         | What it is                                                                      |
+| -------------- | ------------------------------------------------------------------------------- |
+| `Aktør`     | Participants: MPs, parties, and committees ("Udvalg") are all actors            |
+| `Sag`        | A case/bill                                                                     |
+| `Sagstrin`   | A procedural step of a case (a vote happens at a step)                          |
+| `Afstemning` | A single vote event                                                             |
+| `Stemme`     | One MP's individual vote (for / against / abstain / absent) in an`Afstemning` |
+| `SagAktør`  | Links a`Sag` to actors — including which committee handled it                |
+| `Periode`    | A parliamentary session/year ("samling") — we now store several                |
+| `Emneord`    | Subject-term tags on cases — a secondary theming signal for later              |
 
 The key insight: **`SagAktør` already links each bill to the committee that handled
 it** (e.g. Skatteudvalget ≈ tax policy, Miljø- og Fødevareudvalget ≈ environment).
@@ -83,6 +84,7 @@ committees).
 ## Versioned Roadmap
 
 ### v0 — Minimal local prototype
+
 - A small Python script pulls current-session `Sag`, `Afstemning`, `Stemme`,
   `Aktør`, and `SagAktør` data from oda.ft.dk into a local SQLite database.
 - A minimal Flask app with three pages:
@@ -95,19 +97,21 @@ committees).
   on the MP list and bill list, and each MP's detail page showing every
   fetched session as its own section (party can change between them).
 
-### v1 — Theming & browsing
-- Use the committee link as a filterable "theme" across the site.
-- Add search/filter by MP name and by theme.
+### v1 — Theming & browsing — done
+
+- ~~Use the committee link as a filterable "theme" across the site.~~ Done:
+  `/bills` has a committee ("Udvalg") filter. Filtering `/medlemmer` by
+  committee was deliberately left out — the data only links a committee to
+  the bills it handled, not to which MPs sit on it, so that would need a new
+  data fetch, not just a filter.
+- ~~Add search/filter by MP name and by theme.~~ Done: `/medlemmer` has a
+  name-search box.
 - ~~Basic CSS so the site is presentable to show to other people.~~ Done: a
   proper front page plus a teal/slate CSS pass across all pages, deliberately
   neutral rather than partisan-coded given the subject matter.
 
-### v2 — Accountability views
-- Per-MP voting-profile summary: % of votes for/against, broken down by theme.
-- Side-by-side comparison of two or more MPs on a given theme.
-- A simple timeline of an MP's votes within the session.
+### v2 — Smarter theming & more history
 
-### v3 — Smarter theming & more history
 - Keyword/NLP-based auto-tagging layered on top of committee categories, to catch
   cross-cutting topics that don't map cleanly to one committee.
 - Multi-session history (current + previous valgperiode) was pulled forward into
@@ -116,12 +120,15 @@ committees).
   is confirmed correct all the way back to 1952, so this is a matter of deciding
   how far back is useful, not a data-modeling problem.
 
-### v4 — Public & candidate-facing
+### v3 — Public & candidate-facing
+
+- Side-by-side comparison of two or more MPs on a given theme.
 - Deploy publicly (hosting + domain).
 - Approximate non-incumbent candidates' likely positions via their party's average
   voting record on each theme.
 - Possibly a "find your match" tool comparing a citizen's stated views to MPs'
   actual voting records.
+
 
 ## Tech Stack (v0)
 

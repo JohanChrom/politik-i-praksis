@@ -153,8 +153,14 @@ def mp_list():
         (selected_periode,),
     ).fetchall()
     conn.close()
+
+    # filtered in Python rather than SQL LIKE, so æ/ø/å case-fold correctly
+    q = request.args.get("q", "").strip()
+    if q:
+        mps = [mp for mp in mps if q.lower() in mp["navn"].lower()]
+
     return render_template(
-        "mp_list.html", mps=mps, periode_groups=periode_groups, selected_periode=selected_periode
+        "mp_list.html", mps=mps, periode_groups=periode_groups, selected_periode=selected_periode, q=q
     )
 
 
@@ -211,6 +217,21 @@ def bill_list():
     conn = get_connection()
     periode_groups = get_periode_groups(conn)
     selected_periode = get_selected_periode(conn)
+    selected_committee = request.args.get("udvalg", type=int)
+
+    committees = conn.execute(
+        """SELECT DISTINCT committee.id, committee.navn
+           FROM bill JOIN committee ON bill.committee_id = committee.id
+           WHERE bill.periode_id = ?
+           ORDER BY committee.navn""",
+        (selected_periode,),
+    ).fetchall()
+
+    where = "bill.periode_id = ?"
+    params = [selected_periode]
+    if selected_committee:
+        where += " AND bill.committee_id = ?"
+        params.append(selected_committee)
 
     bills = conn.execute(
         f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.vedtaget, bill.dato,
@@ -221,9 +242,9 @@ def bill_list():
                     JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
                     WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne
            FROM bill LEFT JOIN committee ON bill.committee_id = committee.id
-           WHERE bill.periode_id = ?
+           WHERE {where}
            ORDER BY {order_by}""",
-        (selected_periode,),
+        params,
     ).fetchall()
 
     party_votes_for = get_party_vote_breakdowns(conn, selected_periode)
@@ -237,6 +258,8 @@ def bill_list():
         dir=direction,
         periode_groups=periode_groups,
         selected_periode=selected_periode,
+        committees=committees,
+        selected_committee=selected_committee,
     )
 
 

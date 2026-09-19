@@ -14,12 +14,18 @@
         </optgroup>
       {% endfor %}
     </select>
-    <noscript><button type="submit">Vis</button></noscript>
+    <label for="q">Søg:</label>
+    <input type="search" name="q" id="q" value="{{ q }}" placeholder="Navn...">
+    <button type="submit">Vis</button>
   </form>
 
-  <ul class="mp-list">
-    {% for mp in mps %}
-      <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br><small>{{ mp.party }}</small></li>
-    {% endfor %}
-  </ul>
+  {% if mps %}
+    <ul class="mp-list">
+      {% for mp in mps %}
+        <li><a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br><small>{{ mp.party }}</small></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Ingen medlemmer matcher søgningen.</p>
+  {% endif %}
 {% endblock %}

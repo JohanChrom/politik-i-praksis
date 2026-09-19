@@ -7,23 +7,40 @@ the standing context to keep in mind every session.
 
 ## Current status
 
-v0+ built and working locally: `fetch_data.py` pulls **5 sessions** into
-`politik.db` - the current samling plus the whole previous valgperiode
+**v1 complete.** `fetch_data.py` pulls **5 sessions** into `politik.db` -
+the current samling plus the whole previous valgperiode
 (`HISTORICAL_SESSIONS` in fetch_data.py; extend that list by hand to go
-further back). `app.py` serves `/` (front page with live stats),
-`/medlemmer` (MP list), `/mp/<id>` (MP detail, all fetched sessions shown as
-separate sections since party can change between them, date-sortable), and
-`/bills` (bill list, date-sortable) - `/medlemmer` and `/bills` have a
-samling picker grouped by valgperiode. Basic CSS is in place
-(`static/style.css`, teal/slate palette, deliberately neutral - no
-red/blue - given the political subject matter). Run with:
+further back). `app.py` serves `/` (front page with live stats and a
+disclaimer of how far back the data goes), `/medlemmer` (MP list, with a
+name-search box), `/mp/<id>` (MP detail, all fetched sessions shown as
+separate sections since party can change between them, same columns/expand
+treatment as `/bills` plus the MP's own vote), and `/bills` (bill list,
+date-sortable, with a committee/"Udvalg" filter, each row expandable to
+show the bill's resume, a per-party for/imod/fravær/hverken vote
+breakdown, and a link to the enacted law text on retsinformation.dk when
+one exists). `/medlemmer` and `/bills` both have a samling picker grouped
+by valgperiode. CSS is in place (`static/style.css`, teal/slate palette,
+deliberately neutral - no red/blue - given the political subject matter),
+with a light/dark theme toggle. Run with:
 ```
 source .venv/bin/activate
 python3 fetch_data.py   # populates politik.db - closed sessions are skipped
                          # once already fetched, only the open one re-runs
 flask run                # auto-detects app.py, no FLASK_APP needed
 ```
-Next up: rest of v1 (theming/filtering by committee, MP name search).
+**Deliberately not done:** filtering `/medlemmer` by committee - the
+database only links a committee to the bills it handled, not to the MPs who
+sit on it (that's separate data `fetch_data.py` doesn't pull), so this
+would need a new fetch + schema addition, not just a UI filter. Flagged to
+the user, who chose to skip it for now.
+
+Next up: v2, smarter theming & more history (NLP/keyword auto-tagging on top
+of the committee categories; deeper history beyond the current + previous
+valgperiode). Note the roadmap changed since v1 was scoped: the original v2
+(per-MP % for/against summary, MP comparison, a vote timeline) was revised -
+the user wasn't sold on the % summary or timeline, so those were dropped
+entirely, and the side-by-side MP comparison idea was kept but pushed to v3
+instead. See `README.md`'s Versioned Roadmap for the current version list.
 
 **Keep this line updated** whenever a version milestone from the README roadmap is
 completed, so the next session knows where things actually stand without having to
@@ -32,15 +49,15 @@ re-derive it from the code.
 ## Standing constraints — don't silently expand past these
 
 - **Incumbents only.** Only sitting/former MPs have voting records in the data;
-  don't add candidate-matching logic (that's v4).
+  don't add candidate-matching logic (that's v3).
 - **Theme = Folketinget's existing committee data, not NLP.** Use the `SagAktør`
-  committee link for theming. Keyword/NLP auto-tagging is v3, not now.
+  committee link for theming. Keyword/NLP auto-tagging is v2, not now.
 - **Current valgperiode + previous valgperiode only** (5 sessions, explicit
   list in `fetch_data.py`). Deeper history / auto-detecting valgperiode
-  boundaries indefinitely is still v3 territory - the current rule (see the
+  boundaries indefinitely is still v2 territory - the current rule (see the
   data-source cheat-sheet below) is proven correct back to 1952, but going
   further back is still a deliberate by-hand extension, not automatic.
-- **Local only.** No hosting/deployment work until v4.
+- **Local only.** No hosting/deployment work until v3.
 
 If a task seems to require going past one of these, flag it and ask rather than
 just doing it — these boundaries were deliberately chosen to keep v0 buildable.
