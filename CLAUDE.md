@@ -88,7 +88,12 @@ group is only valid for the reference date it actually covers
 samling that's "now", for a closed one it's that samling's own `slutdato`.
 An earlier version hardcoded "now" via `slutdato eq null`, which broke as
 soon as historical sessions were added (see `fetch_mps_for_periode` in
-fetch_data.py for the generalized version).
+fetch_data.py for the generalized version). `startdato` can be null too, not
+just `slutdato` - found a real row while backfilling to 2015 (a Greenlandic
+MP's membership in a small, newly-formed party grouping, `AktørAktör` id
+37896341, has both dates null - a genuine gap in Folketinget's own data, not
+a fetch bug). Treated the same way as a null `slutdato`: "unknown, so don't
+exclude on this end" (`datetime.min` as the sentinel).
 
 **Valgperiode grouping rule (confirmed against the entire 1952-2026 Periode
 history, zero exceptions):** a samling titled "(2. samling)" or higher always

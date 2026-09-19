@@ -12,16 +12,18 @@ from database import get_connection, init_db
 BASE = "https://oda.ft.dk/api/"
 PAGE_SIZE = 100
 
-# The previous valgperiode's samlinger, to fetch alongside whatever the
-# current session turns out to be. Derived from a simple rule confirmed
-# against oda.ft.dk's entire Periode history (1952-2026, zero exceptions):
-# a samling titled "(2. samling)" or higher always marks a real election and
-# the start of a brand-new valgperiode; a plain-titled year just continues
-# whichever valgperiode is already running. The 2022-11-01 election started
-# id 158 ("2022-23 (2. samling)"); that valgperiode ran through id 165
-# ("2025-26 (1. samling)") until the 2026-03-24 election started a new one.
+# Past valgperioder's samlinger, to fetch alongside whatever the current
+# session turns out to be. Derived from a simple rule confirmed against
+# oda.ft.dk's entire Periode history (1952-2026, zero exceptions): a samling
+# titled "(2. samling)" or higher always marks a real election and the start
+# of a brand-new valgperiode; a plain-titled year (or "(1. samling)") just
+# continues whichever valgperiode is already running. Goes back to 2015 - a
+# clean cutoff since it lands exactly on a valgperiode boundary (the
+# 2015-06-18 election), rather than a partial term - covering four full
+# valgperioder: 2015-06-18 (id 138) through 2019-06-05 (id 150) through
+# 2022-11-01 (id 158) through 2026-03-24, when the current one started.
 # Extend this list by hand if more history is wanted later.
-HISTORICAL_SESSIONS = [165, 163, 160, 158]
+HISTORICAL_SESSIONS = [165, 163, 160, 158, 157, 155, 153, 151, 150, 148, 146, 144, 139, 138]
 
 STEMMETYPE = {1: "For", 2: "Imod", 3: "Fravær", 4: "Hverken for eller imod"}
 
@@ -97,7 +99,7 @@ def fetch_mps_for_periode(periode_id, reference_date):
             {"$filter": f"tilaktørid eq {group['id']} and rolleid eq 15"},
         )
         for relation in relations:
-            start = datetime.fromisoformat(relation["startdato"])
+            start = datetime.fromisoformat(relation["startdato"]) if relation["startdato"] else datetime.min
             end = datetime.fromisoformat(relation["slutdato"]) if relation["slutdato"] else None
             if not (start <= reference_date and (end is None or reference_date <= end)):
                 continue  # this particular membership wasn't active at reference_date
