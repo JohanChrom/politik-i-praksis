@@ -183,6 +183,12 @@ th, td {
   text-align: left;
   padding: 0.8rem 1.1rem;
   border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th:last-child, td:last-child {
+  border-right: none;
 }
 
 th {
@@ -196,6 +202,10 @@ th {
 
 tr:last-child td {
   border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
 }
 
 tbody tr:hover {

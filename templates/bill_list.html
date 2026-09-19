@@ -37,6 +37,11 @@
           <details>
             <summary>{{ bill.titelkort }}</summary>
             {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
+            {% if bill.law_url %}
+              <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
+            {% elif not bill.vedtaget %}
+              <p><strong><em>Forslaget blev ikke vedtaget, så der findes ingen lovtekst.</em></strong></p>
+            {% endif %}
             {% if bill.party_votes %}
               <table class="vote-breakdown">
                 <tr>
@@ -56,9 +61,6 @@
                   </tr>
                 {% endfor %}
               </table>
-            {% endif %}
-            {% if bill.law_url %}
-              <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
             {% endif %}
           </details>
         </td>

@@ -79,6 +79,52 @@ def law_text_url(bill):
     return None
 
 
+def get_party_vote_breakdowns(conn, periode_id):
+    """Returns a party_votes_for(bill_id) function giving the per-party
+    for/imod/fravær/hverken vote counts for that bill, scoped to this one
+    periode - party composition (who's in a multi-member party) differs
+    across samlinger, so this has to be computed per periode rather than
+    once globally."""
+    parties = conn.execute(
+        """SELECT party FROM mp_period WHERE periode_id = ?
+           GROUP BY party HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC""",
+        (periode_id,),
+    ).fetchall()
+    party_names = [p["party"] for p in parties]
+
+    vote_rows = conn.execute(
+        f"""SELECT bill.id AS bill_id, mp_period.party, vote.vote_type, COUNT(*) AS n
+            FROM vote
+            JOIN bill ON vote.bill_id = bill.id
+            JOIN mp_period ON vote.mp_id = mp_period.mp_id AND mp_period.periode_id = bill.periode_id
+            WHERE bill.periode_id = ? AND mp_period.party IN ({",".join("?" * len(party_names))})
+            GROUP BY bill.id, mp_period.party, vote.vote_type""",
+        (periode_id, *party_names),
+    ).fetchall() if party_names else []
+
+    votes_by_bill = {}
+    for row in vote_rows:
+        votes_by_bill.setdefault(row["bill_id"], {}).setdefault(row["party"], {})[row["vote_type"]] = row["n"]
+
+    def party_votes_for(bill_id):
+        bill_votes = votes_by_bill.get(bill_id, {})
+        return [
+            {"party": party, **{vt: bill_votes.get(party, {}).get(vt, 0) for vt in VOTE_TYPES}}
+            for party in party_names
+        ]
+
+    return party_votes_for
+
+
+def attach_bill_extras(bill, party_votes_for):
+    """Adds the law-text link and per-party breakdown (suppressed if every
+    count would be zero) to a bill row, for the expandable details on
+    /bills and /mp/<id>."""
+    pv_list = party_votes_for(bill["id"])
+    has_votes = any(pv[vt] for pv in pv_list for vt in VOTE_TYPES)
+    return dict(bill, law_url=law_text_url(bill), party_votes=pv_list if has_votes else None)
+
+
 @app.route("/")
 def index():
     conn = get_connection()
@@ -136,12 +182,23 @@ def mp_detail(mp_id):
     sections = []
     for periode in periods:
         votes = conn.execute(
-            f"""SELECT bill.titelkort, bill.nummer, bill.dato, vote.vote_type
+            f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.dato, bill.vedtaget,
+                       bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
+                       committee.navn AS committee_navn,
+                       (SELECT GROUP_CONCAT(sponsor.navn, ', ')
+                        FROM bill_sponsor
+                        JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
+                        WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
+                       vote.vote_type
                FROM vote JOIN bill ON vote.bill_id = bill.id
+               LEFT JOIN committee ON bill.committee_id = committee.id
                WHERE vote.mp_id = ? AND bill.periode_id = ?
                ORDER BY {order_by}""",
             (mp_id, periode["id"]),
         ).fetchall()
+
+        party_votes_for = get_party_vote_breakdowns(conn, periode["id"])
+        votes = [attach_bill_extras(v, party_votes_for) for v in votes]
         sections.append({"periode": periode, "votes": votes})
 
     conn.close()
@@ -169,41 +226,9 @@ def bill_list():
         (selected_periode,),
     ).fetchall()
 
-    parties = conn.execute(
-        """SELECT party FROM mp_period WHERE periode_id = ?
-           GROUP BY party HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC""",
-        (selected_periode,),
-    ).fetchall()
-    party_names = [p["party"] for p in parties]
-
-    vote_rows = conn.execute(
-        f"""SELECT bill.id AS bill_id, mp_period.party, vote.vote_type, COUNT(*) AS n
-            FROM vote
-            JOIN bill ON vote.bill_id = bill.id
-            JOIN mp_period ON vote.mp_id = mp_period.mp_id AND mp_period.periode_id = bill.periode_id
-            WHERE bill.periode_id = ? AND mp_period.party IN ({",".join("?" * len(party_names))})
-            GROUP BY bill.id, mp_period.party, vote.vote_type""",
-        (selected_periode, *party_names),
-    ).fetchall() if party_names else []
+    party_votes_for = get_party_vote_breakdowns(conn, selected_periode)
+    bills = [attach_bill_extras(b, party_votes_for) for b in bills]
     conn.close()
-
-    votes_by_bill = {}
-    for row in vote_rows:
-        votes_by_bill.setdefault(row["bill_id"], {}).setdefault(row["party"], {})[row["vote_type"]] = row["n"]
-
-    def party_votes_for(bill_id):
-        bill_votes = votes_by_bill.get(bill_id, {})
-        return [
-            {"party": party, **{vt: bill_votes.get(party, {}).get(vt, 0) for vt in VOTE_TYPES}}
-            for party in party_names
-        ]
-
-    bills_with_extras = []
-    for b in bills:
-        pv_list = party_votes_for(b["id"])
-        has_votes = any(pv[vt] for pv in pv_list for vt in VOTE_TYPES)
-        bills_with_extras.append(dict(b, law_url=law_text_url(b), party_votes=pv_list if has_votes else None))
-    bills = bills_with_extras
 
     return render_template(
         "bill_list.html",

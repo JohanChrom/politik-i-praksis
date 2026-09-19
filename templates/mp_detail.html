@@ -15,12 +15,53 @@
     <h2>{{ section.periode.titel }} - {{ section.periode.party }}</h2>
     {% if section.votes %}
       <table>
-        <tr><th>Forslag</th><th>Nummer</th><th>Dato</th><th>Stemte</th></tr>
+        <tr>
+          <th>Nummer</th>
+          <th>Forslag</th>
+          <th>Dato</th>
+          <th>Udvalg</th>
+          <th>Forslagsstiller</th>
+          <th>Resultat</th>
+          <th>Stemte</th>
+        </tr>
         {% for vote in section.votes %}
           <tr>
-            <td>{{ vote.titelkort }}</td>
             <td>{{ vote.nummer }}</td>
+            <td>
+              <details>
+                <summary>{{ vote.titelkort }}</summary>
+                {% if vote.resume %}<p>{{ vote.resume }}</p>{% endif %}
+                {% if vote.law_url %}
+                  <p><a href="{{ vote.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
+                {% elif not vote.vedtaget %}
+                  <p><strong><em>Forslaget blev ikke vedtaget, så der findes ingen lovtekst.</em></strong></p>
+                {% endif %}
+                {% if vote.party_votes %}
+                  <table class="vote-breakdown">
+                    <tr>
+                      <th>Parti</th>
+                      <th>For</th>
+                      <th>Imod</th>
+                      <th>Fravær</th>
+                      <th>Hverken</th>
+                    </tr>
+                    {% for pv in vote.party_votes %}
+                      <tr>
+                        <td>{{ pv.party }}</td>
+                        <td class="vote-for">{{ pv["For"] }}</td>
+                        <td class="vote-imod">{{ pv["Imod"] }}</td>
+                        <td class="vote-fravaer">{{ pv["Fravær"] }}</td>
+                        <td class="vote-fravaer">{{ pv["Hverken for eller imod"] }}</td>
+                      </tr>
+                    {% endfor %}
+                  </table>
+                {% endif %}
+              </details>
+            </td>
             <td>{{ vote.dato[:10] if vote.dato else "-" }}</td>
+            <td>{{ vote.committee_navn or "-" }}</td>
+            <td>{{ vote.sponsor_navne or "-" }}</td>
+            <td class="{{ 'result-passed' if vote.vedtaget else 'result-failed' }}">{{ "Vedtaget" if vote.vedtaget else "Forkastet" }}</td>
             <td>{{ vote.vote_type }}</td>
           </tr>
         {% endfor %}
