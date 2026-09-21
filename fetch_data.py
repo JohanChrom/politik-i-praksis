@@ -27,6 +27,41 @@ HISTORICAL_SESSIONS = [165, 163, 160, 158, 157, 155, 153, 151, 150, 148, 146, 14
 
 STEMMETYPE = {1: "For", 2: "Imod", 3: "Fravær", 4: "Hverken for eller imod"}
 
+# Folketinget's Emneord (subject-term tag) ids that were hand-merged into a
+# duplicate/near-duplicate canonical id during cleanup (e.g. "udlændinge" ->
+# "udlændingepolitik", "benzinafgift" -> "benzin") - old id -> canonical id.
+# Without this, re-fetching a bill still tagged with an old id on the API's
+# side would silently recreate the row we merged away, since the id's own
+# text differs from the canonical term's text (the same-text dedup below
+# only catches genuinely identical text under a fresh id).
+EMNEORD_ALIASES = {
+    33108: 33059, 33344: 84800, 33469: 34661, 33549: 33104, 33550: 33104,
+    33551: 33104, 33585: 43936, 33740: 84085, 33941: 34372, 34000: 33999,
+    34107: 33054, 34169: 84066, 34202: 33142, 34278: 34661, 34338: 33709,
+    34344: 33302, 34352: 33206, 34367: 33055, 34385: 34865, 34418: 33206,
+    34486: 34257, 34487: 34257, 34496: 33337, 34497: 62608, 34514: 33278,
+    34570: 33921, 34636: 62402, 34658: 34661, 34660: 34661, 34691: 33059,
+    35140: 35521, 35141: 41117, 35143: 84066, 35144: 84066, 35157: 33054,
+    35337: 33059, 35371: 33054, 35453: 84085, 35658: 33278, 35868: 83565,
+    35912: 33222, 36062: 56589, 36253: 33055, 36316: 33571, 36364: 33318,
+    36624: 84667, 36734: 33337, 36792: 33409, 36793: 83685, 37059: 34181,
+    37639: 35000, 37641: 47328, 38648: 44699, 38654: 33751, 38661: 35167,
+    38665: 34114, 38915: 33921, 39571: 33206, 39666: 35256, 39697: 34399,
+    39766: 33570, 40384: 34953, 40862: 34136, 41000: 33340, 42919: 34114,
+    43220: 83651, 44039: 33133, 44309: 41977, 44626: 43936, 44632: 34372,
+    45952: 33303, 46681: 34143, 46689: 60381, 46782: 33142, 47417: 84085,
+    49660: 33340, 50567: 84667, 50568: 34483, 51607: 33438, 51615: 62393,
+    51821: 36361, 52929: 60381, 53935: 83685, 54359: 34277, 54366: 50031,
+    55363: 34114, 56147: 54912, 56188: 33438, 56532: 41977, 56535: 34136,
+    56541: 84667, 56563: 34390, 57196: 35814, 57892: 35187, 57963: 34061,
+    59109: 33508, 59470: 34975, 61066: 34061, 61311: 33318, 61730: 33337,
+    62108: 34970, 62149: 33333, 62232: 33805, 62461: 33054, 66117: 84085,
+    69348: 60381, 73762: 33337, 73959: 33104, 76171: 83565, 78134: 33096,
+    80470: 33337, 83028: 33337, 83608: 33104, 83650: 34661, 84318: 33921,
+    84565: 34483, 84730: 33133, 85378: 33570, 85379: 33570, 85380: 33570,
+    85390: 33570, 85394: 33570, 85418: 33570, 85438: 33570,
+}
+
 
 def get_json(path, params=None):
     params = dict(params or {})
@@ -279,6 +314,13 @@ def save_periode_to_db(periode, mps, bills, committee_memberships):
             (mp_id, periode["id"], mp["party"]),
         )
 
+    # maps normalized (trimmed, lowercased) emneord text -> the id already
+    # stored under that text, so a fresh Emneord id from the API that's just
+    # a re-issue of a term we already have doesn't create a duplicate row
+    emneord_id_by_text = {
+        tekst.strip().lower(): id for id, tekst in cursor.execute("SELECT id, tekst FROM emneord")
+    }
+
     saved_committees = set()
     saved_sponsors = set()
     saved_emneord = set()
@@ -327,15 +369,19 @@ def save_periode_to_db(periode, mps, bills, committee_memberships):
             )
 
         for term in bill["emneord_terms"]:
-            if term["id"] not in saved_emneord:
+            normalized = term["emneord"].strip().lower()
+            default_id = EMNEORD_ALIASES.get(term["id"], term["id"])
+            emneord_id = emneord_id_by_text.get(normalized, default_id)
+            if emneord_id not in saved_emneord:
                 cursor.execute(
                     "INSERT OR IGNORE INTO emneord (id, tekst) VALUES (?, ?)",
-                    (term["id"], term["emneord"]),
+                    (emneord_id, term["emneord"]),
                 )
-                saved_emneord.add(term["id"])
+                saved_emneord.add(emneord_id)
+                emneord_id_by_text[normalized] = emneord_id
             cursor.execute(
                 "INSERT OR IGNORE INTO bill_emneord (bill_id, emneord_id) VALUES (?, ?)",
-                (bill["id"], term["id"]),
+                (bill["id"], emneord_id),
             )
 
         for stemme in bill["stemmer"]:
