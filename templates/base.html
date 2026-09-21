@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" id="theme-color-meta" content="#ffffff">
   <title>{% block title %}Politik i Praksis{% endblock %}</title>
   <script>
     (function () {
@@ -40,6 +41,7 @@
   <script>
     (function () {
       var btn = document.getElementById('theme-toggle');
+      var meta = document.getElementById('theme-color-meta');
       var html = document.documentElement;
 
       function isDark() {
@@ -51,6 +53,8 @@
         var dark = isDark();
         btn.textContent = dark ? '☀️' : '🌙';
         btn.setAttribute('aria-label', dark ? 'Skift til lyst tema' : 'Skift til mørkt tema');
+        // Matches the --surface color the header is actually painted with
+        meta.setAttribute('content', dark ? '#1e293b' : '#ffffff');
       }
 
       btn.addEventListener('click', function () {

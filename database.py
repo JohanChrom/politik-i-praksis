@@ -1,6 +1,7 @@
+import os
 import sqlite3
 
-DB_PATH = "politik.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "politik.db")
 
 
 def get_connection():
