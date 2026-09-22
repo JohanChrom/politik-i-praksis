@@ -195,6 +195,7 @@ def mp_detail(mp_id):
     # request value - so this stays safe from SQL injection)
     direction = "asc" if request.args.get("dir") == "asc" else "desc"
     order_by = f"bill.dato {'ASC' if direction == 'asc' else 'DESC'}"
+    view = "forslag" if request.args.get("view") == "forslag" else "stemmer"
 
     conn = get_connection()
     mp = conn.execute("SELECT id, navn FROM mp WHERE id = ?", (mp_id,)).fetchone()
@@ -216,32 +217,54 @@ def mp_detail(mp_id):
 
     sections = []
     for periode in periods:
-        votes = conn.execute(
-            f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.dato, bill.vedtaget,
-                       bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
-                       committee.navn AS committee_navn,
-                       (SELECT GROUP_CONCAT(sponsor.navn, ', ')
-                        FROM bill_sponsor
-                        JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
-                        WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
-                       (SELECT GROUP_CONCAT(emneord.tekst, ', ')
-                        FROM bill_emneord
-                        JOIN emneord ON emneord.id = bill_emneord.emneord_id
-                        WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster,
-                       vote.vote_type
-               FROM vote JOIN bill ON vote.bill_id = bill.id
-               LEFT JOIN committee ON bill.committee_id = committee.id
-               WHERE vote.mp_id = ? AND bill.periode_id = ?
-               ORDER BY {order_by}""",
-            (mp_id, periode["id"]),
-        ).fetchall()
+        if view == "forslag":
+            bills = conn.execute(
+                f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.dato, bill.vedtaget,
+                           bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
+                           committee.navn AS committee_navn,
+                           (SELECT GROUP_CONCAT(sponsor.navn, ', ')
+                            FROM bill_sponsor
+                            JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
+                            WHERE bill_sponsor.bill_id = bill.id
+                              AND sponsor.id != ?) AS co_sponsor_navne,
+                           (SELECT GROUP_CONCAT(emneord.tekst, ', ')
+                            FROM bill_emneord
+                            JOIN emneord ON emneord.id = bill_emneord.emneord_id
+                            WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster
+                   FROM bill
+                   JOIN bill_sponsor ON bill_sponsor.bill_id = bill.id AND bill_sponsor.sponsor_id = ?
+                   LEFT JOIN committee ON bill.committee_id = committee.id
+                   WHERE bill.periode_id = ?
+                   ORDER BY {order_by}""",
+                (mp_id, mp_id, periode["id"]),
+            ).fetchall()
+        else:
+            bills = conn.execute(
+                f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.dato, bill.vedtaget,
+                           bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
+                           committee.navn AS committee_navn,
+                           (SELECT GROUP_CONCAT(sponsor.navn, ', ')
+                            FROM bill_sponsor
+                            JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
+                            WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
+                           (SELECT GROUP_CONCAT(emneord.tekst, ', ')
+                            FROM bill_emneord
+                            JOIN emneord ON emneord.id = bill_emneord.emneord_id
+                            WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster,
+                           vote.vote_type
+                   FROM vote JOIN bill ON vote.bill_id = bill.id
+                   LEFT JOIN committee ON bill.committee_id = committee.id
+                   WHERE vote.mp_id = ? AND bill.periode_id = ?
+                   ORDER BY {order_by}""",
+                (mp_id, periode["id"]),
+            ).fetchall()
 
         party_votes_for = get_party_vote_breakdowns(conn, periode["id"])
-        votes = [attach_bill_extras(v, party_votes_for) for v in votes]
-        sections.append({"periode": periode, "votes": votes})
+        bills = [attach_bill_extras(b, party_votes_for) for b in bills]
+        sections.append({"periode": periode, "bills": bills})
 
     conn.close()
-    return render_template("mp_detail.html", mp=mp, sections=sections, dir=direction)
+    return render_template("mp_detail.html", mp=mp, sections=sections, dir=direction, view=view)
 
 
 @app.route("/bills")

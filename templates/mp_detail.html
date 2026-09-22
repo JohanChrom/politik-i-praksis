@@ -5,8 +5,13 @@
 
   {% if sections %}
     <p>
-      <a href="/mp/{{ mp.id }}?dir={{ 'asc' if dir == 'desc' else 'desc' }}">
-        Sortér stemmer efter dato ({{ '↑' if dir == 'asc' else '↓' }})
+      <a href="/mp/{{ mp.id }}?view=stemmer&dir={{ dir }}">Stemmer</a>
+      |
+      <a href="/mp/{{ mp.id }}?view=forslag&dir={{ dir }}">Stillede forslag</a>
+    </p>
+    <p>
+      <a href="/mp/{{ mp.id }}?view={{ view }}&dir={{ 'asc' if dir == 'desc' else 'desc' }}">
+        Sortér {{ 'stemmer' if view == 'stemmer' else 'forslag' }} efter dato ({{ '↑' if dir == 'asc' else '↓' }})
       </a>
     </p>
   {% endif %}
@@ -14,31 +19,31 @@
   {% for section in sections %}
     <h2>{{ section.periode.titel }} - {{ section.periode.party }}</h2>
     {% if section.periode.committees %}<p class="tags">Udvalg: {{ section.periode.committees }}</p>{% endif %}
-    {% if section.votes %}
+    {% if section.bills %}
       <table>
         <tr>
           <th>Nummer</th>
           <th>Forslag</th>
           <th>Dato</th>
           <th>Udvalg</th>
-          <th>Forslagsstiller</th>
+          <th>{{ 'Forslagsstiller' if view == 'stemmer' else 'Medforslagsstillere' }}</th>
           <th>Resultat</th>
-          <th>Stemte</th>
+          {% if view == 'stemmer' %}<th>Stemte</th>{% endif %}
         </tr>
-        {% for vote in section.votes %}
+        {% for bill in section.bills %}
           <tr>
-            <td>{{ vote.nummer }}</td>
+            <td>{{ bill.nummer }}</td>
             <td>
               <details>
-                <summary>{{ vote.titelkort }}</summary>
-                {% if vote.resume %}<p>{{ vote.resume }}</p>{% endif %}
-                {% if vote.emneord_tekster %}<p class="tags">Emneord: {{ vote.emneord_tekster }}</p>{% endif %}
-                {% if vote.law_url %}
-                  <p><a href="{{ vote.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
-                {% elif not vote.vedtaget %}
+                <summary>{{ bill.titelkort }}</summary>
+                {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
+                {% if bill.emneord_tekster %}<p class="tags">Emneord: {{ bill.emneord_tekster }}</p>{% endif %}
+                {% if bill.law_url %}
+                  <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
+                {% elif not bill.vedtaget %}
                   <p><strong><em>Forslaget blev ikke vedtaget, så der findes ingen lovtekst.</em></strong></p>
                 {% endif %}
-                {% if vote.party_votes %}
+                {% if bill.party_votes %}
                   <table class="vote-breakdown">
                     <tr>
                       <th>Parti</th>
@@ -47,7 +52,7 @@
                       <th>Fravær</th>
                       <th>Hverken</th>
                     </tr>
-                    {% for pv in vote.party_votes %}
+                    {% for pv in bill.party_votes %}
                       <tr>
                         <td>{{ pv.party }}</td>
                         <td class="vote-for">{{ pv["For"] }}</td>
@@ -60,16 +65,16 @@
                 {% endif %}
               </details>
             </td>
-            <td>{{ vote.dato[:10] if vote.dato else "-" }}</td>
-            <td>{{ vote.committee_navn or "-" }}</td>
-            <td>{{ vote.sponsor_navne or "-" }}</td>
-            <td class="{{ 'result-passed' if vote.vedtaget else 'result-failed' }}">{{ "Vedtaget" if vote.vedtaget else "Forkastet" }}</td>
-            <td>{{ vote.vote_type }}</td>
+            <td>{{ bill.dato[:10] if bill.dato else "-" }}</td>
+            <td>{{ bill.committee_navn or "-" }}</td>
+            <td>{{ bill.sponsor_navne if view == 'stemmer' else (bill.co_sponsor_navne or "-") }}</td>
+            <td class="{{ 'result-passed' if bill.vedtaget else 'result-failed' }}">{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
+            {% if view == 'stemmer' %}<td>{{ bill.vote_type }}</td>{% endif %}
           </tr>
         {% endfor %}
       </table>
     {% else %}
-      <p>Ingen registrerede stemmer i denne samling.</p>
+      <p>Ingen registrerede {{ 'stemmer' if view == 'stemmer' else 'stillede forslag' }} i denne samling.</p>
     {% endif %}
   {% endfor %}
 {% endblock %}
