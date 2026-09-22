@@ -26,7 +26,8 @@
           <th>Forslag</th>
           <th>Dato</th>
           <th>Udvalg</th>
-          <th>{{ 'Forslagsstiller' if view == 'stemmer' else 'Medforslagsstillere' }}</th>
+          <th>Forslagsstiller</th>
+          {% if view == 'forslag' %}<th>Medforslagsstillere</th>{% endif %}
           <th>Resultat</th>
           {% if view == 'stemmer' %}<th>Stemte</th>{% endif %}
         </tr>
@@ -67,7 +68,8 @@
             </td>
             <td>{{ bill.dato[:10] if bill.dato else "-" }}</td>
             <td>{{ bill.committee_navn or "-" }}</td>
-            <td>{{ bill.sponsor_navne if view == 'stemmer' else (bill.co_sponsor_navne or "-") }}</td>
+            <td>{{ bill.sponsor_navne if view == 'stemmer' else mp.navn }}</td>
+            {% if view == 'forslag' %}<td>{{ bill.co_sponsor_navne or "-" }}</td>{% endif %}
             <td class="{{ 'result-passed' if bill.vedtaget else 'result-failed' }}">{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
             {% if view == 'stemmer' %}<td>{{ bill.vote_type }}</td>{% endif %}
           </tr>
