@@ -1,1 +1,0 @@
-/Users/johanallerup/Projects/project-context/PolitikIPraksis/CLAUDE.md

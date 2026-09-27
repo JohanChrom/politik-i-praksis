@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 *.db
 .DS_Store
+
+# Local context docs (state/policy) - private, never pushed
+CLAUDE.md
+PROJECT_CONTEXT.md
