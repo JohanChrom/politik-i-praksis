@@ -274,7 +274,7 @@ def bill_list():
     periode_groups = get_periode_groups(conn)
     selected_periode = get_selected_periode(conn)
     selected_committee = request.args.get("udvalg", type=int)
-    selected_emneord = request.args.get("emneord", type=int)
+    selected_tema = request.args.get("tema", type=int)
 
     committees = conn.execute(
         """SELECT DISTINCT committee.id, committee.navn
@@ -284,12 +284,13 @@ def bill_list():
         (selected_periode,),
     ).fetchall()
 
-    emneord_options = conn.execute(
-        """SELECT DISTINCT emneord.id, emneord.tekst
+    tema_options = conn.execute(
+        """SELECT DISTINCT tema.id, tema.navn
            FROM bill JOIN bill_emneord ON bill_emneord.bill_id = bill.id
-                     JOIN emneord ON emneord.id = bill_emneord.emneord_id
+                     JOIN emneord_tema ON emneord_tema.emneord_id = bill_emneord.emneord_id
+                     JOIN tema ON tema.id = emneord_tema.tema_id
            WHERE bill.periode_id = ?
-           ORDER BY emneord.tekst""",
+           ORDER BY tema.navn""",
         (selected_periode,),
     ).fetchall()
 
@@ -298,9 +299,11 @@ def bill_list():
     if selected_committee:
         where += " AND bill.committee_id = ?"
         params.append(selected_committee)
-    if selected_emneord:
-        where += " AND EXISTS (SELECT 1 FROM bill_emneord WHERE bill_id = bill.id AND emneord_id = ?)"
-        params.append(selected_emneord)
+    if selected_tema:
+        where += """ AND EXISTS (SELECT 1 FROM bill_emneord
+                                 JOIN emneord_tema ON emneord_tema.emneord_id = bill_emneord.emneord_id
+                                 WHERE bill_emneord.bill_id = bill.id AND emneord_tema.tema_id = ?)"""
+        params.append(selected_tema)
 
     bills = conn.execute(
         f"""SELECT bill.id, bill.titelkort, bill.nummer, bill.vedtaget, bill.dato,
@@ -333,8 +336,8 @@ def bill_list():
         selected_periode=selected_periode,
         committees=committees,
         selected_committee=selected_committee,
-        emneord_options=emneord_options,
-        selected_emneord=selected_emneord,
+        tema_options=tema_options,
+        selected_tema=selected_tema,
     )
 
 

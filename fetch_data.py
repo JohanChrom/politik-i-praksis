@@ -3,6 +3,8 @@ data API (oda.ft.dk) into a local SQLite database - for the current session
 plus a fixed backfill list of past sessions.
 """
 
+import csv
+import os
 from datetime import datetime
 
 import requests
@@ -408,6 +410,36 @@ def save_periode_to_db(periode, mps, bills, committee_memberships):
     conn.close()
 
 
+def load_themes():
+    """Reads emneord_themes.csv (emneord_id, tekst, tema) into the tema and
+    emneord_tema tables. A tag can appear on several rows, one per theme.
+    Runs on every fetch since closed sessions are skipped above."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emneord_themes.csv")
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    known_ids = {r[0] for r in cursor.execute("SELECT id FROM emneord")}
+    cursor.execute("DELETE FROM emneord_tema")
+    cursor.execute("DELETE FROM tema")
+    missing = 0
+    for row in rows:
+        emneord_id = int(row["emneord_id"])
+        if emneord_id not in known_ids:
+            missing += 1
+            continue
+        cursor.execute("INSERT OR IGNORE INTO tema (navn) VALUES (?)", (row["tema"],))
+        tema_id = cursor.execute("SELECT id FROM tema WHERE navn = ?", (row["tema"],)).fetchone()[0]
+        cursor.execute(
+            "INSERT OR IGNORE INTO emneord_tema (emneord_id, tema_id) VALUES (?, ?)",
+            (emneord_id, tema_id),
+        )
+    conn.commit()
+    conn.close()
+    print(f"Loaded themes from emneord_themes.csv ({len(rows) - missing} rows, {missing} skipped - tag not in database).")
+
+
 def main():
     print("Setting up database...")
     init_db()
@@ -439,6 +471,7 @@ def main():
 
         save_periode_to_db(periode, mps, bills, committee_memberships)
 
+    load_themes()
     print("Done.")
 
 

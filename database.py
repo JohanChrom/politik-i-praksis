@@ -68,6 +68,17 @@ def init_db():
             PRIMARY KEY (bill_id, emneord_id)
         );
 
+        CREATE TABLE IF NOT EXISTS tema (
+            id INTEGER PRIMARY KEY,
+            navn TEXT NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS emneord_tema (
+            emneord_id INTEGER NOT NULL REFERENCES emneord(id),
+            tema_id INTEGER NOT NULL REFERENCES tema(id),
+            PRIMARY KEY (emneord_id, tema_id)
+        );
+
         CREATE TABLE IF NOT EXISTS bill (
             id INTEGER PRIMARY KEY,
             periode_id INTEGER NOT NULL REFERENCES periode(id),

@@ -21,11 +21,11 @@
         <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
       {% endfor %}
     </select>
-    <label for="emneord">Emneord:</label>
-    <select name="emneord" id="emneord" onchange="this.form.submit()">
+    <label for="tema">Tema:</label>
+    <select name="tema" id="tema" onchange="this.form.submit()">
       <option value="">Alle</option>
-      {% for e in emneord_options %}
-        <option value="{{ e.id }}" {{ "selected" if e.id == selected_emneord else "" }}>{{ e.tekst }}</option>
+      {% for t in tema_options %}
+        <option value="{{ t.id }}" {{ "selected" if t.id == selected_tema else "" }}>{{ t.navn }}</option>
       {% endfor %}
     </select>
     <noscript><button type="submit">Vis</button></noscript>
@@ -36,7 +36,7 @@
       <th>Nummer</th>
       <th>Forslag</th>
       <th>
-        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&emneord={{ selected_emneord or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
+        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&tema={{ selected_tema or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
           Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
         </a>
       </th>
