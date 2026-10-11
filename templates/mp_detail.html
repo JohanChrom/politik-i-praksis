@@ -6,16 +6,23 @@
   <h1>{{ mp.navn }}</h1>
 
   {% if has_periods %}
-    <div class="view-tabs" role="group" aria-label="Vis">
-      <a href="{{ url_for('mp_detail', mp_id=mp.id, view='stemmer', periode=selected_periode, dir=dir) }}" {% if view == 'stemmer' %}aria-current="true"{% endif %}>Afgivne stemmer</a>
-      <a href="{{ url_for('mp_detail', mp_id=mp.id, view='forslag', periode=selected_periode, dir=dir) }}" {% if view == 'forslag' %}aria-current="true"{% endif %}>Stillede forslag</a>
+    <div class="view-tabs" role="group" aria-label="Vælg visning">
+      <a href="{{ url_for('mp_detail', mp_id=mp.id, view='stemmer', periode=selected_periode, dir=dir) }}" {% if view == 'stemmer' %}aria-current="true"{% endif %}>
+        <span class="view-tab-label">Afgivne stemmer</span>
+        <span class="view-tab-count">{{ vote_total|dk_number }} i alt</span>
+      </a>
+      <a href="{{ url_for('mp_detail', mp_id=mp.id, view='forslag', periode=selected_periode, dir=dir) }}" {% if view == 'forslag' %}aria-current="true"{% endif %}>
+        <span class="view-tab-label">Stillede forslag</span>
+        <span class="view-tab-count">{{ sponsor_total|dk_number }} i alt</span>
+      </a>
     </div>
 
     <form class="periode-picker" method="get">
       <input type="hidden" name="view" value="{{ view }}">
       <input type="hidden" name="dir" value="{{ dir }}">
-      <label for="periode">Samling:</label>
-      <select name="periode" id="periode" onchange="this.form.submit()">
+      <div class="field">
+        <label for="periode">Samling:</label>
+        <select name="periode" id="periode" onchange="this.form.submit()">
         <option value="">Alle samlinger</option>
         {% for label, periods in periode_groups %}
           <optgroup label="{{ label }}">
@@ -25,20 +32,25 @@
           </optgroup>
         {% endfor %}
       </select>
-      <label for="udvalg">Udvalg:</label>
-      <select name="udvalg" id="udvalg" onchange="this.form.submit()">
+      </div>
+      <div class="field">
+        <label for="udvalg">Udvalg:</label>
+        <select name="udvalg" id="udvalg" onchange="this.form.submit()">
         <option value="">Alle</option>
         {% for c in committees %}
           <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
         {% endfor %}
       </select>
-      <label for="tema">Tema:</label>
-      <select name="tema" id="tema" onchange="this.form.submit()">
+      </div>
+      <div class="field">
+        <label for="tema">Tema:</label>
+        <select name="tema" id="tema" onchange="this.form.submit()">
         <option value="">Alle</option>
         {% for t in tema_options %}
           <option value="{{ t.id }}" {{ "selected" if t.id == selected_tema else "" }}>{{ t.navn }}</option>
         {% endfor %}
       </select>
+      </div>
       <noscript><button type="submit">Vis</button></noscript>
     </form>
 

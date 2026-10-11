@@ -6,8 +6,9 @@
   <h1>Lovforslag</h1>
 
   <form class="periode-picker" method="get">
-    <label for="periode">Samling:</label>
-    <select name="periode" id="periode" onchange="this.form.submit()">
+    <div class="field">
+      <label for="periode">Samling:</label>
+      <select name="periode" id="periode" onchange="this.form.submit()">
       <option value="alle" {{ "selected" if show_alle else "" }}>Alle samlinger</option>
       {% for label, periods in periode_groups %}
         <optgroup label="{{ label }}">
@@ -17,20 +18,25 @@
         </optgroup>
       {% endfor %}
     </select>
-    <label for="udvalg">Udvalg:</label>
-    <select name="udvalg" id="udvalg" onchange="this.form.submit()">
+    </div>
+    <div class="field">
+      <label for="udvalg">Udvalg:</label>
+      <select name="udvalg" id="udvalg" onchange="this.form.submit()">
       <option value="">Alle</option>
       {% for c in committees %}
         <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
       {% endfor %}
     </select>
-    <label for="tema">Tema:</label>
-    <select name="tema" id="tema" onchange="this.form.submit()">
+    </div>
+    <div class="field">
+      <label for="tema">Tema:</label>
+      <select name="tema" id="tema" onchange="this.form.submit()">
       <option value="">Alle</option>
       {% for t in tema_options %}
         <option value="{{ t.id }}" {{ "selected" if t.id == selected_tema else "" }}>{{ t.navn }}</option>
       {% endfor %}
     </select>
+    </div>
     {% if sort %}<input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="dir" value="{{ dir }}">{% endif %}
     <noscript><button type="submit">Vis</button></noscript>
   </form>

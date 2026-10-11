@@ -226,12 +226,24 @@ footer.site-footer {
 /* Forms / controls */
 
 form.periode-picker {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+form.periode-picker .field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 form.periode-picker label {
-  font-weight: 500;
-  margin-right: 0.5rem;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 select,
@@ -244,6 +256,12 @@ input[type="search"] {
   border-radius: 6px;
   background: var(--surface);
   color: var(--text);
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
+form.periode-picker select {
+  width: 18rem;
 }
 
 form.periode-picker button {
@@ -605,24 +623,37 @@ ul.mp-list .mp-committees li {
   }
 }
 
-/* View switch on an MP page: two clearly clickable buttons, the open one filled */
+/* View switch on an MP page: two large buttons with a count each, the open one filled */
 
 .view-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-4);
 }
 
 .view-tabs a {
-  padding: 0.5rem 1.1rem;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 11rem;
+  padding: 0.7rem 1.3rem;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
   background: var(--surface);
   color: var(--accent);
-  font-weight: 600;
   touch-action: manipulation;
   transition: background var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.view-tab-label {
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
+.view-tab-count {
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
 }
 
 .view-tabs a:active {
@@ -637,7 +668,7 @@ ul.mp-list .mp-committees li {
 @media (hover: hover) and (pointer: fine) {
   .view-tabs a:hover {
     text-decoration: none;
-    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface));
     color: var(--accent);
   }
 
@@ -658,6 +689,17 @@ ul.mp-list .mp-committees li {
 [data-theme="dark"] .view-tabs a[aria-current="true"],
 [data-theme="dark"] .view-tabs a[aria-current="true"]:hover {
   color: var(--bg);
+}
+
+@media (max-width: 480px) {
+  .view-tabs a {
+    flex: 1 1 100%;
+  }
+
+  form.periode-picker .field,
+  form.periode-picker select {
+    width: 100%;
+  }
 }
 
 /* Page links under the bills table */

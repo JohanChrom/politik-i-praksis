@@ -54,12 +54,26 @@ def get_selected_periode(conn, allow_alle=False):
     return request.args.get("periode", type=int) or default_id
 
 
+def canonical_committee_id(conn, committee_id):
+    """The id the Udvalg dropdown uses for this committee (the lowest id of
+    that name), so the right option shows as selected."""
+    if not committee_id:
+        return None
+    row = conn.execute(
+        "SELECT MIN(id) FROM committee WHERE navn = (SELECT navn FROM committee WHERE id = ?)",
+        (committee_id,),
+    ).fetchone()
+    return row[0] or committee_id
+
+
 def filter_clause(committee_id, tema_id):
     """Extra ' AND ...' SQL (plus its params) for the Udvalg and Tema filters,
     shared by /bills and /mp/<id>. Expects the query to be on `bill`."""
     where, params = "", []
     if committee_id:
-        where += " AND bill.committee_id = ?"
+        # Folketinget gives a committee a new id every samling, so match on
+        # the name to catch the same committee in all of them
+        where += " AND bill.committee_id IN (SELECT id FROM committee WHERE navn = (SELECT navn FROM committee WHERE id = ?))"
         params.append(committee_id)
     if tema_id:
         where += """ AND EXISTS (SELECT 1 FROM bill_emneord
@@ -236,10 +250,10 @@ def mp_detail(mp_id):
     order_by = f"bill.dato {'ASC' if direction == 'asc' else 'DESC'}"
     view = "forslag" if request.args.get("view") == "forslag" else "stemmer"
     selected_periode = request.args.get("periode", type=int)  # None = alle samlinger
-    selected_committee = request.args.get("udvalg", type=int)
     selected_tema = request.args.get("tema", type=int)
 
     conn = get_connection()
+    selected_committee = canonical_committee_id(conn, request.args.get("udvalg", type=int))
     mp = conn.execute("SELECT id, navn FROM mp WHERE id = ?", (mp_id,)).fetchone()
     if mp is None:
         abort(404)
@@ -277,9 +291,10 @@ def mp_detail(mp_id):
         option_where += " AND bill.periode_id = ?"
         option_params.append(selected_periode)
     committees = conn.execute(
-        f"""SELECT DISTINCT committee.id, committee.navn
+        f"""SELECT MIN(committee.id) AS id, committee.navn
             FROM bill JOIN committee ON bill.committee_id = committee.id
-            WHERE {option_where} ORDER BY committee.navn""",
+            WHERE {option_where}
+            GROUP BY committee.navn ORDER BY committee.navn""",
         option_params,
     ).fetchall()
     tema_options = conn.execute(
@@ -365,9 +380,12 @@ def mp_detail(mp_id):
             })
         sections[-1]["bills"].append(bill)
 
+    vote_total = conn.execute("SELECT COUNT(*) FROM vote WHERE mp_id = ?", (mp_id,)).fetchone()[0]
+    sponsor_total = conn.execute("SELECT COUNT(*) FROM bill_sponsor WHERE sponsor_id = ?", (mp_id,)).fetchone()[0]
+
     conn.close()
     return render_template(
-        "mp_detail.html", mp=mp, sections=sections, dir=direction, view=view,
+        "mp_detail.html", vote_total=vote_total, sponsor_total=sponsor_total, mp=mp, sections=sections, dir=direction, view=view,
         has_periods=bool(all_periods), total=total, page=page, pages=pages,
         periode_groups=periode_groups, selected_periode=selected_periode,
         committees=committees, selected_committee=selected_committee,
@@ -383,15 +401,16 @@ def bill_list():
     show_alle = selected_periode == "alle"
     # alphabetical order means little across ten years, so "alle" defaults to newest first
     order_by, sort, direction = date_order_by("bill.dato DESC" if show_alle else "bill.titelkort")
-    selected_committee = request.args.get("udvalg", type=int)
+    selected_committee = canonical_committee_id(conn, request.args.get("udvalg", type=int))
     selected_tema = request.args.get("tema", type=int)
 
     periode_where, periode_params = ("1 = 1", []) if show_alle else ("bill.periode_id = ?", [selected_periode])
 
     committees = conn.execute(
-        f"""SELECT DISTINCT committee.id, committee.navn
+        f"""SELECT MIN(committee.id) AS id, committee.navn
             FROM bill JOIN committee ON bill.committee_id = committee.id
             WHERE {periode_where}
+            GROUP BY committee.navn
             ORDER BY committee.navn""",
         periode_params,
     ).fetchall()

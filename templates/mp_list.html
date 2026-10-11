@@ -4,8 +4,9 @@
   <h1>Folketingets medlemmer</h1>
 
   <form class="periode-picker" method="get">
-    <label for="periode">Samling:</label>
-    <select name="periode" id="periode" onchange="this.form.submit()">
+    <div class="field">
+      <label for="periode">Samling:</label>
+      <select name="periode" id="periode" onchange="this.form.submit()">
       {% for label, periods in periode_groups %}
         <optgroup label="{{ label }}">
           {% for p in periods %}
@@ -14,15 +15,20 @@
         </optgroup>
       {% endfor %}
     </select>
-    <label for="udvalg">Udvalg:</label>
-    <select name="udvalg" id="udvalg" onchange="this.form.submit()">
+    </div>
+    <div class="field">
+      <label for="udvalg">Udvalg:</label>
+      <select name="udvalg" id="udvalg" onchange="this.form.submit()">
       <option value="">Alle</option>
       {% for c in committees %}
         <option value="{{ c.id }}" {{ "selected" if c.id == selected_committee else "" }}>{{ c.navn }}</option>
       {% endfor %}
     </select>
-    <label for="q">Søg:</label>
-    <input type="search" name="q" id="q" value="{{ q }}" placeholder="Navn...">
+    </div>
+    <div class="field">
+      <label for="q">Søg:</label>
+      <input type="search" name="q" id="q" value="{{ q }}" placeholder="Navn...">
+    </div>
     <button type="submit">Vis</button>
   </form>
 
