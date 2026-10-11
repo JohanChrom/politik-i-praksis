@@ -859,3 +859,7 @@ h1.type-title {
     animation: none;
   }
 }
+
+p.bill-text {
+  white-space: pre-line;
+}

@@ -359,7 +359,7 @@ def mp_detail(mp_id):
     rows = conn.execute(
         f"""SELECT bill.id, bill.periode_id, periode.titel AS periode_titel,
                    bill.titelkort, bill.nummer, bill.dato, bill.vedtaget,
-                   bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
+                   bill.resume, bill.titel, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
                    committee.navn AS committee_navn,
                    (SELECT GROUP_CONCAT(emneord.tekst, ', ')
                     FROM bill_emneord
@@ -446,7 +446,7 @@ def bill_list():
     bills = conn.execute(
         f"""SELECT bill.id, bill.periode_id, periode.titel AS periode_titel,
                    bill.titelkort, bill.nummer, bill.vedtaget, bill.dato,
-                   bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
+                   bill.resume, bill.titel, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
                    committee.navn AS committee_navn,
                    {SPONSOR_LIST_SQL},
                    (SELECT GROUP_CONCAT(emneord.tekst, ', ')

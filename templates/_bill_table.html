@@ -25,7 +25,8 @@
           <td class="cell-title">
             <details>
               <summary>{{ bill.titelkort }}</summary>
-              {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
+              {% if bill.resume %}<p>{{ bill.resume }}</p>
+              {% elif bill.nummer.startswith('V') and bill.titel %}<p class="bill-text"><strong>Forslagstekst:</strong><br>{{ bill.titel }}</p>{% endif %}
               {% if bill.emneord_tekster %}<p class="tags">Emneord: {{ bill.emneord_tekster }}</p>{% endif %}
               {% if bill.law_url %}
                 <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
