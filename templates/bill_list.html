@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_bill_table.html" import bill_table %}
+{% from "_pagination.html" import pagination %}
 {% block title %}Lovforslag - Politik i Praksis{% endblock %}
 {% block content %}
   <h1>Lovforslag</h1>
@@ -7,6 +8,7 @@
   <form class="periode-picker" method="get">
     <label for="periode">Samling:</label>
     <select name="periode" id="periode" onchange="this.form.submit()">
+      <option value="alle" {{ "selected" if show_alle else "" }}>Alle samlinger</option>
       {% for label, periods in periode_groups %}
         <optgroup label="{{ label }}">
           {% for p in periods %}
@@ -35,18 +37,22 @@
 
   <div class="toolbar">
     <p class="result-count" role="status">
-      {{ bills|length|dk_number }} lovforslag
+      {{ total|dk_number }} lovforslag
       {% if selected_committee or selected_tema %}
-        <a class="reset-link" href="{{ url_for('bill_list', periode=selected_periode) }}">Nulstil filtre</a>
+        <a class="reset-link" href="{{ url_for('bill_list', periode=selected_periode, sort=sort, dir=dir if sort else None) }}">Nulstil filtre</a>
       {% endif %}
     </p>
-    <a class="sort-link" href="{{ url_for('bill_list', periode=selected_periode, udvalg=selected_committee, tema=selected_tema, sort='dato', dir='asc' if sort == 'dato' and dir == 'desc' else 'desc') }}">
+    <a class="sort-link" href="{{ url_for('bill_list', periode=selected_periode, udvalg=selected_committee, tema=selected_tema, sort='dato', dir='asc' if (sort == 'dato' and dir == 'desc') or (show_alle and not sort) else 'desc') }}">
       Sortér efter dato <span aria-hidden="true">{{ ('↑' if dir == 'asc' else '↓') if sort == 'dato' else '↕' }}</span>
     </a>
   </div>
 
   {% if bills %}
-    {{ bill_table(bills) }}
+    {{ bill_table(bills, show_samling=show_alle) }}
+    {% set args = dict(periode=selected_periode, udvalg=selected_committee, tema=selected_tema, sort=sort, dir=dir if sort else None) %}
+    {{ pagination(page, pages,
+                  url_for('bill_list', side=page - 1, **args) if page > 1 else None,
+                  url_for('bill_list', side=page + 1, **args) if page < pages else None) }}
   {% else %}
     <p>Ingen lovforslag matcher de valgte filtre.</p>
   {% endif %}

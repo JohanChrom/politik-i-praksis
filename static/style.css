@@ -536,8 +536,28 @@ ul.mp-list .mp-party {
 }
 
 ul.mp-list .mp-committees {
+  margin-top: var(--space-2);
   font-size: var(--font-size-sm);
   color: var(--text-muted);
+}
+
+ul.mp-list .mp-committees summary {
+  cursor: pointer;
+}
+
+ul.mp-list .mp-committees ul {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+
+/* nested list items must not pick up the card styling of ul.mp-list li */
+ul.mp-list .mp-committees li {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0.15rem 0;
+  display: block;
 }
 
 /* Toolbar above a table: result count / view toggle on the left, sort on the right */
@@ -585,51 +605,74 @@ ul.mp-list .mp-committees {
   }
 }
 
-/* Two-option view switch (Stemmer / Stillede forslag) */
+/* View switch on an MP page: two clearly clickable buttons, the open one filled */
 
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--border);
+.view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.view-tabs a {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--accent);
   border-radius: 8px;
   background: var(--surface);
-  overflow: hidden;
+  color: var(--accent);
+  font-weight: 600;
+  touch-action: manipulation;
+  transition: background var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
-.segmented a {
-  padding: 0.4rem 1rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: background var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+.view-tabs a:active {
+  transform: scale(0.97);
 }
 
-.segmented a + a {
-  border-left: 1px solid var(--border);
-}
-
-.segmented a[aria-current="true"] {
+.view-tabs a[aria-current="true"] {
   background: var(--accent);
   color: #fff;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .segmented a:hover {
+  .view-tabs a:hover {
     text-decoration: none;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    color: var(--accent);
   }
 
-  .segmented a:not([aria-current="true"]):hover {
-    color: var(--accent);
+  .view-tabs a[aria-current="true"]:hover {
+    background: var(--accent);
+    color: #fff;
   }
 }
 
 /* Dark mode accent is a light teal, so white text on it would be unreadable */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .segmented a[aria-current="true"] {
+  :root:not([data-theme="light"]) .view-tabs a[aria-current="true"],
+  :root:not([data-theme="light"]) .view-tabs a[aria-current="true"]:hover {
     color: var(--bg);
   }
 }
 
-[data-theme="dark"] .segmented a[aria-current="true"] {
+[data-theme="dark"] .view-tabs a[aria-current="true"],
+[data-theme="dark"] .view-tabs a[aria-current="true"]:hover {
   color: var(--bg);
+}
+
+/* Page links under the bills table */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.pagination .disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 /* Bill tables: on narrow screens each row becomes a stacked card, so there

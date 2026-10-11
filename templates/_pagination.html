@@ -1,0 +1,10 @@
+{# Forrige / Næste links. prev_url and next_url are None on the first / last page. #}
+{% macro pagination(page, pages, prev_url, next_url) %}
+  {% if pages > 1 %}
+    <nav class="pagination" aria-label="Sider">
+      {% if prev_url %}<a href="{{ prev_url }}">Forrige</a>{% else %}<span class="disabled">Forrige</span>{% endif %}
+      <span>Side {{ page|dk_number }} af {{ pages|dk_number }}</span>
+      {% if next_url %}<a href="{{ next_url }}">Næste</a>{% else %}<span class="disabled">Næste</span>{% endif %}
+    </nav>
+  {% endif %}
+{% endmacro %}

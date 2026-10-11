@@ -32,7 +32,13 @@
         <li>
           <a class="mp-name" href="/mp/{{ mp.id }}">{{ mp.navn }}</a>
           <span class="mp-party">{{ mp.party }}</span>
-          {% if mp.committees %}<span class="mp-committees">{{ mp.committees }}</span>{% endif %}
+          {% if mp.committees %}
+            {% set udvalg = mp.committees.split('|') %}
+            <details class="mp-committees">
+              <summary>Udvalg ({{ udvalg|length }})</summary>
+              <ul>{% for u in udvalg %}<li>{{ u }}</li>{% endfor %}</ul>
+            </details>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

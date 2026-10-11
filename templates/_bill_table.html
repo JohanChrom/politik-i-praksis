@@ -1,11 +1,12 @@
 {# Shared bill table for /bills and /mp/<id>. On narrow screens the CSS turns each
    row into a stacked card, using each cell's data-label as its small caption. #}
-{% macro bill_table(bills, sponsor_override=None, show_cosponsors=False, show_vote=False) %}
+{% macro bill_table(bills, sponsor_override=None, show_cosponsors=False, show_vote=False, show_samling=False) %}
   <table class="bill-table">
     <thead>
       <tr>
         <th scope="col">Nummer</th>
         <th scope="col">Forslag</th>
+        {% if show_samling %}<th scope="col">Samling</th>{% endif %}
         <th scope="col">Dato</th>
         <th scope="col">Udvalg</th>
         <th scope="col">Forslagsstiller</th>
@@ -54,6 +55,7 @@
               {% endif %}
             </details>
           </td>
+          {% if show_samling %}<td data-label="Samling">{{ bill.periode_titel }}</td>{% endif %}
           <td data-label="Dato">{{ bill.dato[:10] if bill.dato else "-" }}</td>
           <td data-label="Udvalg">{{ bill.committee_navn or "-" }}</td>
           <td data-label="Forslagsstiller">{{ sponsor_override or bill.sponsor_navne or "-" }}</td>
