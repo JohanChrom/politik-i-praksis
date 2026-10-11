@@ -11,7 +11,7 @@
       if (saved) document.documentElement.setAttribute('data-theme', saved);
     })();
   </script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=css_version) }}">
 </head>
 <body>
   <header class="site-header">

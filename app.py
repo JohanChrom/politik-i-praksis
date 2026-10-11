@@ -1,4 +1,5 @@
 import math
+import os
 import re
 
 from flask import Flask, render_template, abort, request
@@ -6,6 +7,14 @@ from flask import Flask, render_template, abort, request
 from database import get_connection
 
 app = Flask(__name__)
+
+@app.context_processor
+def static_version():
+    """Adds ?v=<last-changed time> to the stylesheet link, so browsers (and
+    PythonAnywhere's static-file cache) fetch it again whenever it changes."""
+    css = os.path.join(app.static_folder, "style.css")
+    return {"css_version": int(os.path.getmtime(css))}
+
 
 @app.template_filter("dk_number")
 def dk_number(n):
