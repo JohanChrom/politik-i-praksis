@@ -70,11 +70,7 @@
   {% for section in sections %}
     <h2>{{ section.periode.titel }} - {{ section.periode.party }}</h2>
     {% if section.periode.committees %}<p class="tags">Udvalg: {{ section.periode.committees }}</p>{% endif %}
-    {% if view == 'forslag' %}
-      {{ bill_table(section.bills, sponsor_override=mp.navn, show_cosponsors=True) }}
-    {% else %}
-      {{ bill_table(section.bills, show_vote=True) }}
-    {% endif %}
+    {{ bill_table(section.bills, highlight=mp.navn, show_vote=(view == 'stemmer')) }}
   {% endfor %}
 
   {% if sections %}

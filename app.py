@@ -27,6 +27,14 @@ VALGPERIODE_LABELS = ["Nuværende valgperiode", "Forrige valgperiode"]
 VOTE_TYPES = ["For", "Imod", "Fravær", "Hverken for eller imod"]
 PAGE_SIZE = 50
 
+# Sponsors in the order Folketinget lists them ("Fremsat af ..."), joined with
+# '|'. The first name is shown as Forslagsstiller, the rest as Medforslagsstillere.
+SPONSOR_LIST_SQL = """(SELECT GROUP_CONCAT(navn, '|') FROM (
+                         SELECT sponsor.navn FROM bill_sponsor
+                         JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
+                         WHERE bill_sponsor.bill_id = bill.id
+                         ORDER BY bill_sponsor.rowid)) AS sponsor_liste"""
+
 
 def group_by_valgperiode(periods_oldest_first):
     """A samling titled '(2. samling)' or higher always marks a real
@@ -328,12 +336,8 @@ def mp_detail(mp_id):
                       LEFT JOIN committee ON bill.committee_id = committee.id"""
         from_params = [mp_id]
         where_sql = "1 = 1"
-        extra_select = """, (SELECT GROUP_CONCAT(sponsor.navn, ', ')
-                            FROM bill_sponsor
-                            JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
-                            WHERE bill_sponsor.bill_id = bill.id
-                              AND sponsor.id != ?) AS co_sponsor_navne"""
-        select_params = [mp_id]
+        extra_select = ""
+        select_params = []
     else:
         from_sql = """FROM vote
                       JOIN bill ON vote.bill_id = bill.id
@@ -341,11 +345,7 @@ def mp_detail(mp_id):
                       LEFT JOIN committee ON bill.committee_id = committee.id"""
         from_params = []
         where_sql = "vote.mp_id = ?"
-        extra_select = """, vote.vote_type,
-                          (SELECT GROUP_CONCAT(sponsor.navn, ', ')
-                           FROM bill_sponsor
-                           JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
-                           WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne"""
+        extra_select = ", vote.vote_type"
         select_params = []
     where_sql += periode_where + filter_where
     where_params = ([mp_id] if view == "stemmer" else []) + periode_params + filter_params
@@ -364,7 +364,8 @@ def mp_detail(mp_id):
                    (SELECT GROUP_CONCAT(emneord.tekst, ', ')
                     FROM bill_emneord
                     JOIN emneord ON emneord.id = bill_emneord.emneord_id
-                    WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster
+                    WHERE bill_emneord.bill_id = bill.id) AS emneord_tekster,
+                   {SPONSOR_LIST_SQL}
                    {extra_select}
             {from_sql}
             WHERE {where_sql}
@@ -447,10 +448,7 @@ def bill_list():
                    bill.titelkort, bill.nummer, bill.vedtaget, bill.dato,
                    bill.resume, bill.lovnummer, bill.lovnummerdato, bill.retsinformationsurl,
                    committee.navn AS committee_navn,
-                   (SELECT GROUP_CONCAT(sponsor.navn, ', ')
-                    FROM bill_sponsor
-                    JOIN sponsor ON sponsor.id = bill_sponsor.sponsor_id
-                    WHERE bill_sponsor.bill_id = bill.id) AS sponsor_navne,
+                   {SPONSOR_LIST_SQL},
                    (SELECT GROUP_CONCAT(emneord.tekst, ', ')
                     FROM bill_emneord
                     JOIN emneord ON emneord.id = bill_emneord.emneord_id
