@@ -2,7 +2,10 @@
 {% block title %}Politik i Praksis{% endblock %}
 {% block content %}
   <section class="hero">
-    <h1>Politik i Praksis</h1>
+    <h1 class="type-title">
+      <span class="sr-only">Politik i Praksis</span>
+      <span class="type-line" aria-hidden="true"><span class="type-prompt">&gt;&nbsp;</span><span id="type-text">Politik i Praksis</span><span class="type-caret"></span></span>
+    </h1>
     <p class="tagline">
       Se, hvordan Folketingets medlemmer faktisk stemmer.
     </p>
@@ -58,4 +61,48 @@
       deltager i en afstemning.
     </p>
   </div>
+
+  <script>
+    // Types the title, then a short line, then the title again, and so on.
+    // Without JavaScript or with "reduce motion" the page just shows the title.
+    (function () {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var el = document.getElementById('type-text');
+      var title = 'Politik i Praksis';
+      var lines = ['Hvem stemte hvad?', 'Se afstemningerne.', 'Hvad blev vedtaget?'];
+      var sequence = [];
+      lines.forEach(function (line) { sequence.push(title, line); });
+      var index = 0, chars = title.length, deleting = true, timer = 0;
+
+      function step() {
+        var current = sequence[index];
+        if (deleting) {
+          chars--;
+          el.textContent = current.slice(0, chars);
+          if (chars <= 0) {
+            deleting = false;
+            index = (index + 1) % sequence.length;
+            timer = setTimeout(step, 420);
+            return;
+          }
+          timer = setTimeout(step, 45);
+        } else {
+          chars++;
+          el.textContent = current.slice(0, chars);
+          if (chars >= current.length) {
+            deleting = true;
+            // the site name stays on screen longer than the other lines
+            timer = setTimeout(step, current === title ? 3500 : 1800);
+            return;
+          }
+          timer = setTimeout(step, 90 + Math.random() * 60);
+        }
+      }
+
+      function start() { if (!timer) timer = setTimeout(step, 3500); }
+      function stop() { clearTimeout(timer); timer = 0; }
+      document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+      start();
+    })();
+  </script>
 {% endblock %}
