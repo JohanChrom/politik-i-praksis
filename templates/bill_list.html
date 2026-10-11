@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_bill_table.html" import bill_table %}
 {% block title %}Lovforslag - Politik i Praksis{% endblock %}
 {% block content %}
   <h1>Lovforslag</h1>
@@ -28,62 +29,25 @@
         <option value="{{ t.id }}" {{ "selected" if t.id == selected_tema else "" }}>{{ t.navn }}</option>
       {% endfor %}
     </select>
+    {% if sort %}<input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="dir" value="{{ dir }}">{% endif %}
     <noscript><button type="submit">Vis</button></noscript>
   </form>
 
-  <table>
-    <tr>
-      <th>Nummer</th>
-      <th>Forslag</th>
-      <th>
-        <a href="/bills?periode={{ selected_periode }}&udvalg={{ selected_committee or '' }}&tema={{ selected_tema or '' }}&sort=dato&dir={{ 'asc' if sort == 'dato' and dir == 'desc' else 'desc' }}">
-          Dato{% if sort == 'dato' %} ({{ '↑' if dir == 'asc' else '↓' }}){% endif %}
-        </a>
-      </th>
-      <th>Udvalg</th>
-      <th>Forslagsstiller</th>
-      <th>Resultat</th>
-    </tr>
-    {% for bill in bills %}
-      <tr>
-        <td>{{ bill.nummer }}</td>
-        <td>
-          <details>
-            <summary>{{ bill.titelkort }}</summary>
-            {% if bill.resume %}<p>{{ bill.resume }}</p>{% endif %}
-            {% if bill.emneord_tekster %}<p class="tags">Emneord: {{ bill.emneord_tekster }}</p>{% endif %}
-            {% if bill.law_url %}
-              <p><a href="{{ bill.law_url }}" target="_blank" rel="noopener">Læs lovteksten på retsinformation.dk</a></p>
-            {% elif not bill.vedtaget %}
-              <p><strong><em>Forslaget blev ikke vedtaget, så der findes ingen lovtekst.</em></strong></p>
-            {% endif %}
-            {% if bill.party_votes %}
-              <table class="vote-breakdown">
-                <tr>
-                  <th>Parti</th>
-                  <th>For</th>
-                  <th>Imod</th>
-                  <th>Fravær</th>
-                  <th>Hverken</th>
-                </tr>
-                {% for pv in bill.party_votes %}
-                  <tr>
-                    <td>{{ pv.party }}</td>
-                    <td class="vote-for">{{ pv["For"] }}</td>
-                    <td class="vote-imod">{{ pv["Imod"] }}</td>
-                    <td class="vote-fravaer">{{ pv["Fravær"] }}</td>
-                    <td class="vote-fravaer">{{ pv["Hverken for eller imod"] }}</td>
-                  </tr>
-                {% endfor %}
-              </table>
-            {% endif %}
-          </details>
-        </td>
-        <td>{{ bill.dato[:10] if bill.dato else "-" }}</td>
-        <td>{{ bill.committee_navn or "-" }}</td>
-        <td>{{ bill.sponsor_navne or "-" }}</td>
-        <td class="{{ 'result-passed' if bill.vedtaget else 'result-failed' }}">{{ "Vedtaget" if bill.vedtaget else "Forkastet" }}</td>
-      </tr>
-    {% endfor %}
-  </table>
+  <div class="toolbar">
+    <p class="result-count" role="status">
+      {{ bills|length|dk_number }} lovforslag
+      {% if selected_committee or selected_tema %}
+        <a class="reset-link" href="{{ url_for('bill_list', periode=selected_periode) }}">Nulstil filtre</a>
+      {% endif %}
+    </p>
+    <a class="sort-link" href="{{ url_for('bill_list', periode=selected_periode, udvalg=selected_committee, tema=selected_tema, sort='dato', dir='asc' if sort == 'dato' and dir == 'desc' else 'desc') }}">
+      Sortér efter dato <span aria-hidden="true">{{ ('↑' if dir == 'asc' else '↓') if sort == 'dato' else '↕' }}</span>
+    </a>
+  </div>
+
+  {% if bills %}
+    {{ bill_table(bills) }}
+  {% else %}
+    <p>Ingen lovforslag matcher de valgte filtre.</p>
+  {% endif %}
 {% endblock %}

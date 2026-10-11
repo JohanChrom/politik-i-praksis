@@ -30,9 +30,9 @@
     <ul class="mp-list">
       {% for mp in mps %}
         <li>
-          <a href="/mp/{{ mp.id }}">{{ mp.navn }}</a><br>
-          <small>{{ mp.party }}</small>
-          {% if mp.committees %}<br><small>{{ mp.committees }}</small>{% endif %}
+          <a class="mp-name" href="/mp/{{ mp.id }}">{{ mp.navn }}</a>
+          <span class="mp-party">{{ mp.party }}</span>
+          {% if mp.committees %}<span class="mp-committees">{{ mp.committees }}</span>{% endif %}
         </li>
       {% endfor %}
     </ul>

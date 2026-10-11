@@ -6,7 +6,13 @@ from database import get_connection
 
 app = Flask(__name__)
 
-SPLIT_RE = re.compile(r"\((\d+)\. samling\)")
+@app.template_filter("dk_number")
+def dk_number(n):
+    """Danish thousands separator: 532637 -> 532.637"""
+    return f"{n:,}".replace(",", ".")
+
+
+SPLIT_RE =re.compile(r"\((\d+)\. samling\)")
 VALGPERIODE_LABELS = ["Nuværende valgperiode", "Forrige valgperiode"]
 VOTE_TYPES = ["For", "Imod", "Fravær", "Hverken for eller imod"]
 

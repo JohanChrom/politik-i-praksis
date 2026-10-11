@@ -296,8 +296,13 @@ th {
   color: var(--text-muted);
   font-weight: 600;
   font-size: var(--font-size-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+}
+
+/* Row headers (party names in the vote breakdown) read like normal cells */
+tbody th {
+  background: none;
+  color: var(--text);
+  font-weight: 500;
 }
 
 tr:last-child td {
@@ -404,6 +409,9 @@ ul.mp-list {
 }
 
 ul.mp-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -515,4 +523,204 @@ ul.mp-list li {
 
 .info-block p {
   max-width: 70ch;
+}
+
+
+ul.mp-list .mp-name {
+  font-weight: 600;
+}
+
+ul.mp-list .mp-party {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+ul.mp-list .mp-committees {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* Toolbar above a table: result count / view toggle on the left, sort on the right */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.result-count {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.reset-link {
+  margin-left: var(--space-3);
+}
+
+.sort-link {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  touch-action: manipulation;
+  transition: border-color var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.sort-link:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sort-link:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    text-decoration: none;
+  }
+}
+
+/* Two-option view switch (Stemmer / Stillede forslag) */
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.segmented a {
+  padding: 0.4rem 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: background var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+}
+
+.segmented a + a {
+  border-left: 1px solid var(--border);
+}
+
+.segmented a[aria-current="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .segmented a:hover {
+    text-decoration: none;
+  }
+
+  .segmented a:not([aria-current="true"]):hover {
+    color: var(--accent);
+  }
+}
+
+/* Dark mode accent is a light teal, so white text on it would be unreadable */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .segmented a[aria-current="true"] {
+    color: var(--bg);
+  }
+}
+
+[data-theme="dark"] .segmented a[aria-current="true"] {
+  color: var(--bg);
+}
+
+/* Bill tables: on narrow screens each row becomes a stacked card, so there
+   is no sideways scrolling. Every cell carries a data-label used as its caption. */
+
+@media (max-width: 760px) {
+  table.bill-table,
+  table.bill-table tbody,
+  table.bill-table tr,
+  table.bill-table td {
+    display: block;
+  }
+
+  table.bill-table {
+    background: none;
+    border: none;
+  }
+
+  /* Header row is redundant once cells have captions; keep it for screen readers */
+  table.bill-table > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  table.bill-table > tbody > tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    margin-bottom: var(--space-3);
+  }
+
+  table.bill-table > tbody > tr:nth-child(even) {
+    background: var(--surface);
+  }
+
+  table.bill-table > tbody > tr > td {
+    border: none;
+    padding: 0.25rem 0;
+  }
+
+  table.bill-table > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+
+  /* Title first, bill number second, then the rest in table order */
+  table.bill-table > tbody > tr > td.cell-title {
+    order: -2;
+    font-weight: 600;
+    padding-bottom: var(--space-2);
+  }
+
+  table.bill-table > tbody > tr > td.cell-nummer {
+    order: -1;
+  }
+
+  /* The nested party table stays a real table and scrolls inside the card if needed */
+  table.vote-breakdown {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    font-weight: 400;
+  }
+
+  table.vote-breakdown tbody {
+    display: table-row-group;
+  }
+
+  table.vote-breakdown thead {
+    display: table-header-group;
+  }
+
+  table.vote-breakdown tr {
+    display: table-row;
+  }
+
+  table.vote-breakdown td,
+  table.vote-breakdown th {
+    display: table-cell;
+  }
+
+  td.cell-title details p {
+    font-weight: 400;
+  }
 }

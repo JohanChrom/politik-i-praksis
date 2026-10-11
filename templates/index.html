@@ -4,15 +4,15 @@
   <section class="hero">
     <h1>Politik i Praksis</h1>
     <p class="tagline">
-      Politisk gennemsigtighed 
+      Se, hvordan Folketingets medlemmer faktisk stemmer.
     </p>
     <p>
-      Politik i Praksis samler Folketingets
-      egne åbne data om afstemninger og lovforslag, så du kan se, hvordan dine
-      folkevalgte faktisk har stemt.
+      Siden samler Folketingets egne åbne data om afstemninger og lovforslag,
+      så du kan slå op, hvordan dine folkevalgte har stemt.
     </p>
     <p class="disclaimer">
-      Bemærk: Data dækker perioden fra {{ stats.data_start }} og frem til i dag.
+      Et uafhængigt projekt, ikke en officiel side fra Folketinget. Data dækker
+      perioden fra {{ stats.data_start }} og frem til i dag.
     </p>
     <div class="cta-row">
       <a class="btn" href="/medlemmer">Se medlemmer</a>
@@ -22,15 +22,15 @@
 
   <div class="stats-strip">
     <div class="stat">
-      <span class="stat-number">{{ stats.bill_count }}</span>
+      <span class="stat-number">{{ stats.bill_count|dk_number }}</span>
       <span class="stat-label">lovforslag</span>
     </div>
     <div class="stat">
-      <span class="stat-number">{{ stats.vote_count }}</span>
+      <span class="stat-number">{{ stats.vote_count|dk_number }}</span>
       <span class="stat-label">registrerede stemmer</span>
     </div>
     <div class="stat">
-      <span class="stat-number">{{ stats.periode_count }}</span>
+      <span class="stat-number">{{ stats.periode_count|dk_number }}</span>
       <span class="stat-label">samlinger</span>
     </div>
   </div>
@@ -39,19 +39,19 @@
     <h2>Sådan virker det</h2>
     <p>
       Alle data kommer direkte fra <a href="https://www.ft.dk/da/dokumenter/aabne_data">Folketingets
-      åbne data</a> — ikke fra pressemeddelelser eller partiprogrammer. Hvert
-      lovforslag er koblet til det udvalg, det blev behandlet i, og hver
+      åbne data</a>, ikke fra pressemeddelelser eller partiprogrammer. Hvert
+      lovforslag er koblet til det udvalg, der behandlede det, og hver
       afstemning viser præcis, hvordan hvert enkelt medlem stemte: for, imod,
       hverken for eller imod, eller fravær.
     </p>
     <p>
-      Du kan se den aktuelle valgperiode og den foregående, så du kan følge et
-      medlems stemmemønster over flere samlinger — ikke kun de seneste måneder.
+      Data går flere valgperioder tilbage, så du kan følge et medlems
+      stemmemønster over mange samlinger og ikke kun de seneste måneder.
     </p>
     <p>
       Ikke alle medlemmer stemmer ved hver afstemning. Partierne indgår såkaldte
       <a href="https://www.ft.dk/da/ofte-stillede-spoergsmaal/mode_hvad-er-clearingaftaler">clearingaftaler</a>,
-      som betyder, at clearede medlemmer ikke deltager i afstemningen — de kan
+      som betyder, at clearede medlemmer ikke deltager i afstemningen. De kan
       dermed fx deltage i politiske møder, konferencer eller studieture, uden at
       det påvirker styrkeforholdet i Folketingssalen. Efter grundlovens § 50 er
       Folketinget beslutningsdygtigt, når over halvdelen af medlemmerne (90)
